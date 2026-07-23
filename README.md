@@ -14,6 +14,7 @@
 | [단계 3 · 스텝 전환 / thought 언마킹](PlanReActPlanner_단계3_스텝전환_thought언마킹.md) | 툴 실행 → contents 재조립 → thought 언마킹 |
 | [단계 4 · 루프 종료 / 최종답변](PlanReActPlanner_단계4_루프종료_최종답변.md) | `/*FINAL_ANSWER*/` split → 루프 종료 → 세션 저장 |
 | [단계 5 · 두 번째 사이클](PlanReActPlanner_단계5_두번째사이클.md) | 다음 사용자 턴에서의 재진행 |
+| [흐름도 (draw.io)](PlanReActPlanner_flow.drawio) | 요청→응답→툴 loop→최종답변 전체 흐름 다이어그램 ([app.diagrams.net](https://app.diagrams.net)에서 열기) |
 
 ### 핵심 요약
 

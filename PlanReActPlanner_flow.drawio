@@ -1,0 +1,120 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.0.0">
+  <diagram id="planreact-flow" name="PlanReActPlanner Flow (ADK v1.26.0)">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="PlanReActPlanner — 요청부터 최종답변까지 프롬프트 변화 흐름 (ADK Python v1.26.0)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="200" y="10" width="520" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="start" value="사용자 요청&#10;runner.run_async(new_message)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="50" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="runner" value="Runner&#10;· 세션에 user 이벤트 저장 (_append_new_message_to_session)&#10;· _find_agent_to_run → 처리 에이전트 선택" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="310" y="130" width="320" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="loopentry" value="Agent.run_async → BaseLlmFlow.run_async&#10;while 루프 시작 (1스텝 = LLM 1회 호출)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="310" y="220" width="320" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="newreq" value="_run_one_step_async&#10;llm_request = LlmRequest()  ← 매 스텝 새 객체" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="310" y="300" width="320" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pre" value="전처리 (요청 프로세서 순차 실행)&#10;instructions → identity → contents → _nl_planning&#10;★ PlanReAct 지침 주입 + thought 언마킹" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="380" width="320" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="llm" value="모델 호출 (generate_content)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="490" width="320" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="post" value="후처리 (응답 프로세서)&#10;process_planning_response&#10;★ /*태그*/ 파싱 · thought 마킹 · FINAL_ANSWER split" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="570" width="320" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dec" value="함수콜(function_call) 있나?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="380" y="680" width="180" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="tool" value="툴 실행&#10;handle_function_calls_async&#10;→ function_response 이벤트 세션 저장" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
+          <mxGeometry x="720" y="690" width="270" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="final" value="is_final_response = True → while break&#10;runner: 최종 이벤트 세션 저장" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="310" y="830" width="320" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="end" value="사용자에게 최종 답변 노출&#10;(평문 파트; 추론은 thought로 접힘)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="930" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note_pre" value="전처리에서의 프롬프트 구성&#10;— system_instruction = [agent 지침] + [identity] + [PlanReAct 지침]&#10;   → 매 스텝 동일하게 재부착 (정적, 불변)&#10;— contents = 세션 이벤트로부터 재조립 (스텝마다 누적)&#10;— _remove_thought_from_request:&#10;   이전 계획/추론 thought=True → None (모델에 평문 재노출)" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6b656;align=left;spacingLeft=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="10" y="360" width="290" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note_post" value="후처리에서의 파싱 규칙 (문자열 기반)&#10;— LLM은 thought를 안 보냄; ADK가 .text를 파싱해 마킹&#10;— PLANNING/REASONING/ACTION/REPLANNING로 시작&#10;   → 파트 전체 thought=True&#10;— /*FINAL_ANSWER*/ 포함 → split&#10;   앞(태그 포함)=추론(thought), 뒤=최종답변(평문)&#10;— 태그 블록 내용은 편집 안 함 (append-only, 동결)" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6b656;align=left;spacingLeft=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="10" y="560" width="290" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note_cycle" value="두 번째 사이클 (다음 사용자 턴)&#10;— 새 invocation_id / 동일 파이프라인&#10;— contents = 1사이클 전체 + 새 질의 (더 길어짐)&#10;— 1사이클의 계획/추론/답변이 평문 재노출&#10;— system 지침·태그 마커는 그대로 유지" style="shape=note;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#82b366;align=left;spacingLeft=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="700" y="900" width="290" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_start_runner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="start" target="runner">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_runner_loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="runner" target="loopentry">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_loop_newreq" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="loopentry" target="newreq">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_newreq_pre" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="newreq" target="pre">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_pre_llm" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="pre" target="llm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_llm_post" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="llm" target="post">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_post_dec" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="post" target="dec">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_dec_tool" value="예 (함수콜 있음)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontStyle=1;" edge="1" parent="1" source="dec" target="tool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_tool_loop" value="loop: 다음 스텝&#10;(툴 결과가 contents에 추가됨)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#b85450;fontColor=#b85450;fontStyle=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="tool" target="newreq">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="845" y="325" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e_dec_final" value="아니오 (FINAL_ANSWER)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontStyle=1;" edge="1" parent="1" source="dec" target="final">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_final_end" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="final" target="end">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_end_runner" value="두 번째 사이클: 새 user 메시지&#10;(히스토리 누적 · system 지침 동일)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#6c8ebf;fontColor=#6c8ebf;fontStyle=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="end" target="runner">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="270" y="955" />
+              <mxPoint x="270" y="160" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
