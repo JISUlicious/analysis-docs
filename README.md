@@ -54,6 +54,8 @@ google-adk/
 | 문서 | 내용 |
 |---|---|
 | [AgentTool 동작 분석](google-adk/agent-tool/AgentTool_동작분석.md) | `AgentTool(LlmAgent)` 의 동작을 일반 agent 흐름 및 sub-agent 전송과 **대비**해 정리 |
+| [AgentTool + SkillToolset OOM 원인 분석](google-adk/agent-tool/AgentTool_SkillToolset_OOM_원인분석.md) | AgentTool 호출 시 메모리 폭증→OOM의 원인 사슬(무한 재시도 루프 + 은폐 + 곱셈 구조), 격리 재현 실측, upstream 수정 현황, 완화책 |
+| [OOM 재현 번들](google-adk/agent-tool/repro/) | 재현 스크립트(`repro_oom.py`, mock LLM·워치독 내장) + 셋업/시나리오/실측 결과/개선안 리포트 |
 
 ### 핵심 요약
 
