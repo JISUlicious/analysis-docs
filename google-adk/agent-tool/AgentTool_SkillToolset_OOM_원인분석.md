@@ -185,6 +185,11 @@ child = Agent(..., before_tool_callback=probe_before_tool,
 
 ## 7. v1.26.0에서의 완화책 (업그레이드 전)
 
+> **실측 검증 완료 (repro s5)**: 아래 1(콜백 가드) + 3(AgentTool 서브클래스)만으로 s1과 동일한
+> 폭주 조건에서 자식 LLM 스텝 **500 → 4**, 부모 재호출 0회로 즉시 종료됨을 확인.
+> 검증된 전체 레시피(카운터 + 차단 + `skip_summarization` 하드스톱 + SafeAgentTool)와
+> 콜백 능력 범위 표는 [repro/README.md §5-1](repro/README.md) 참고.
+
 1.26.x에 머무는 동안은 **백포트 성격의 방어**가 필요:
 
 1. **자식 에이전트에 skill-오류 차단 콜백** (bc45ee67 백포트, 가장 효과적):

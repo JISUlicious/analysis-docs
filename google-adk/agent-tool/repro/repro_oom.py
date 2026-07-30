@@ -5,6 +5,8 @@
   s2  큰 스킬(8MB) + 동일 루프 → 메모리 폭증, 워치독(700MB)이 OOM 직전에 차단
   s3  자식이 load_skill 후 빈 응답으로 종료 → AgentTool이 '' 반환 → 부모가 재호출(곱셈 구조)
   s4  [대조군] 동일 자식을 sub-agent(transfer)로 실행 → 이벤트 가시성 + 공유 상한 확인
+  s5  [개선안 검증] s1과 동일한 폭주 조건 + 3중 방어(콜백 카운터/차단/하드스톱 + SafeAgentTool)
+      → 루프가 몇 스텝 만에 끊기고 부모가 재호출하지 않는지 확인
 
 안전장치: RSS 워치독(700MB 초과 시 즉시 종료), 스텝 백스톱, signal.alarm.
 """
@@ -159,6 +161,51 @@ def probe_before_model(*, callback_context, llm_request):
   return None
 
 
+# ── s5: 개선안(3중 방어) — upstream bc45ee67/e737f229/b983fcf9 백포트 ───────
+SKILL_TOOLS = {"load_skill", "load_skill_resource", "list_skills"}
+MAX_FAILURES = 2
+
+
+def guard_count_fail(*, tool, args, tool_context, tool_response):  # after_tool
+  """실패 카운터 + 임계 도달 시 오류 문구 강화(설득 단계)."""
+  if tool.name in SKILL_TOOLS and isinstance(tool_response, dict) \
+     and "error" in tool_response:
+    key = f"temp:skill_fail_{tool_context.invocation_id}"
+    n = int(tool_context.state.get(key) or 0) + 1
+    tool_context.state[key] = n
+    log(f"  [GUARD:after_tool] skill 실패 #{n} ({tool.name})")
+    if n >= MAX_FAILURES:
+      return {**tool_response,
+              "error_code": "SKILL_LOOKUP_FATAL",
+              "error": tool_response["error"] +
+                       " Do NOT retry any path. Report this failure and stop."}
+  return None
+
+
+def guard_block_fail(*, tool, args, tool_context):  # before_tool
+  """임계 초과 시 도구 실행 차단 + skip_summarization 하드스톱."""
+  key = f"temp:skill_fail_{tool_context.invocation_id}"
+  if tool.name in SKILL_TOOLS and int(tool_context.state.get(key) or 0) > MAX_FAILURES:
+    tool_context.actions.skip_summarization = True  # ★ 자식 flow 즉시 종료
+    log("  [GUARD:before_tool] 차단 + skip_summarization 하드스톱 발동")
+    return {"error": "Skill lookup failed repeatedly; aborted.",
+            "error_code": "SKILL_LOOKUP_FATAL"}
+  return None
+
+
+class SafeAgentTool(AgentTool):
+  """'' 반환 방지(부모 재호출 루프 차단) + wall-time 절단."""
+
+  async def run_async(self, *, args, tool_context):
+    result = await asyncio.wait_for(
+        super().run_async(args=args, tool_context=tool_context), timeout=120)
+    if not result:
+      log("  [GUARD:SafeAgentTool] 빈 결과 → 오류 메시지로 대체")
+      return ("Child agent failed to produce output (skill lookup errors). "
+              "Do NOT call this tool again; report the failure to the user.")
+    return result
+
+
 # ── 에이전트 구성 ────────────────────────────────────────────────────────────
 def build_skill() -> sk.Skill:
   body = "A" * (8_000_000 if SCENARIO == "s2" else 200)
@@ -200,6 +247,20 @@ async def main() -> None:
     parent = Agent(name="parent_agent",
                    model=ParentTransferLlm(model="mock-parent-transfer"),
                    instruction="Transfer to child.", sub_agents=[child])
+  elif SCENARIO == "s5":
+    # s1과 동일한 폭주 조건(고집스런 재시도 모델) + 3중 방어 장착
+    child = Agent(
+        name="child_agent", description="guarded child",
+        model=ChildRetryLlm(model="mock-child"),
+        instruction="Use skills to answer.",
+        tools=[SkillToolset(skills=[build_skill()])],
+        before_tool_callback=[guard_block_fail, probe_before_tool],
+        after_tool_callback=guard_count_fail,
+        before_model_callback=probe_before_model,
+    )
+    parent = Agent(name="parent_agent", model=ParentLlm(model="mock-parent"),
+                   instruction="Delegate to child.",
+                   tools=[SafeAgentTool(agent=child)])
   else:
     raise SystemExit(f"unknown scenario {SCENARIO}")
 

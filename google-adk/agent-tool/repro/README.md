@@ -29,6 +29,7 @@ venv126/bin/python repro_oom.py s1   # 시나리오 지정 (s1~s4)
 | **s2** | s1과 동일하되 스킬 본문 8MB. 자식이 `load_skill`(성공, 8MB 응답)과 리소스 오류를 번갈아 발생 | **OOM 경로** — 메모리 초선형 증가 |
 | **s3** | 자식이 `load_skill` 후 **빈 응답**으로 턴 종료 (upstream #6225 패턴). 부모 mock은 빈 도구 결과를 보면 재호출(최대 3회) | AgentTool의 `''` 반환 → 부모 재호출 곱셈 구조 |
 | **s4** | **대조군** — 동일 자식을 `sub_agents`(transfer)로 실행 | sub-agent 모드에선 왜 사고가 안 나는지 |
+| **s5** | **개선안 검증** — s1과 동일한 폭주 조건(고집스런 재시도 모델) + §5의 3중 방어 장착 | 가드가 루프를 몇 스텝에 끊고 부모 재호출까지 막는지 |
 
 핵심 mock (발췌):
 
@@ -61,6 +62,7 @@ child = Agent(...,
 | **s2** | **RSS 116MB → 707MB, 152스텝(~3.4분)에 워치독 차단.** 자식이 보는 요청 페이로드 600MB까지 증가. 스텝 처리시간 2차 함수적 증가(스텝25=2.4s → 스텝100=50s → 스텝150=198s). **max_llm_calls=500 도달 전에 메모리가 먼저 폭주 = OOM 재현** |
 | **s3** | AgentTool이 `''` 반환 → 부모가 **AgentTool 재호출 ×3**(`child_invocations=3`), 재호출마다 자식 상한 카운터 리셋 — 곱셈 구조 실증 |
 | **s4** | 자식 fc/fr 이벤트 **1,000개가 호출자에게 실시간 스트리밍**(author=child_agent). 상한도 부모와 **합산 공유**되어 총 500(자식 499 + 부모 1)에서 정지 |
+| **s5** | **가드 작동 확인**: 자식 LLM 스텝 **500 → 4**로 즉시 차단. 시퀀스 = 실패#1 → 실패#2(문구 강화) → 실패#3 → before_tool 차단+`skip_summarization` 하드스톱 → SafeAgentTool이 `''`를 오류 메시지로 변환 → 부모가 재호출 없이 종료(parent_llm=2). peak RSS 109MB |
 
 대표 로그 (s2):
 
@@ -92,41 +94,80 @@ child = Agent(...,
 
 ## 5. 개선안
 
-### 5-1. 즉시 적용 (1.x 유지 시 백포트)
+### 5-1. 즉시 적용: 3중 방어 (1.x 유지 시 백포트) — **s5로 실측 검증됨**
 
-1. **skill 실패 차단 콜백** (upstream `bc45ee67` 로직 백포트 — 가장 효과적):
+콜백의 능력 범위를 먼저 이해해야 한다:
+
+| 하려는 것 | 가능? | 메커니즘 |
+|---|---|---|
+| after_tool에서 응답 dict 교체 | ✅ | dict 반환 시 tool_response **대체** |
+| before_tool에서 도구 실행 스킵 + 가짜 응답 | ✅ | dict 반환 시 실제 실행 **건너뜀** |
+| 텍스트 part 직접 주입 | ❌ | function_response 내용물만 변경 가능 |
+| 루프 강제 종료 | ✅ | `tool_context.actions.skip_summarization = True` → 해당 이벤트가 `is_final_response()=True` → **flow while 루프 즉시 break** |
+
+응답 문구 교체만으로는 "설득"이라 모델이 계속 재시도할 수 있다. **카운터 + 차단 + 하드스톱** 조합이 필요하다 (upstream `bc45ee67`의 본체도 문구가 아니라 실패 카운터).
+
+**① 자식 콜백 — 카운터·차단·하드스톱** (`repro_oom.py`의 `guard_count_fail`/`guard_block_fail`):
 
 ```python
 SKILL_TOOLS = {"load_skill", "load_skill_resource", "list_skills"}
+MAX_FAILURES = 2
 
-def block_skill_retry(*, tool, args, tool_context):        # before_tool_callback
-    key = f"temp:skill_fail_{tool_context.invocation_id}"
-    if tool.name in SKILL_TOOLS and int(tool_context.state.get(key) or 0) >= 2:
-        return {"error": "Skill lookup failed repeatedly. STOP retrying and "
-                         "report the failure to the user.",
-                "error_code": "SKILL_LOOKUP_FATAL"}
-    return None
-
-def count_skill_failure(*, tool, args, tool_context, tool_response):  # after_tool_callback
+def guard_count_fail(*, tool, args, tool_context, tool_response):  # after_tool
+    """실패 카운터 + 임계 도달 시 오류 문구 강화(설득 단계)."""
     if tool.name in SKILL_TOOLS and isinstance(tool_response, dict) \
        and "error" in tool_response:
         key = f"temp:skill_fail_{tool_context.invocation_id}"
-        tool_context.state[key] = int(tool_context.state.get(key) or 0) + 1
+        n = int(tool_context.state.get(key) or 0) + 1
+        tool_context.state[key] = n
+        if n >= MAX_FAILURES:
+            return {**tool_response, "error_code": "SKILL_LOOKUP_FATAL",
+                    "error": tool_response["error"] +
+                             " Do NOT retry any path. Report this failure and stop."}
     return None
 
-child = Agent(..., before_tool_callback=block_skill_retry,
-              after_tool_callback=count_skill_failure)
+def guard_block_fail(*, tool, args, tool_context):  # before_tool
+    """임계 초과 시 도구 실행 차단 + skip_summarization 하드스톱."""
+    key = f"temp:skill_fail_{tool_context.invocation_id}"
+    if tool.name in SKILL_TOOLS and int(tool_context.state.get(key) or 0) > MAX_FAILURES:
+        tool_context.actions.skip_summarization = True   # ★ 자식 flow 즉시 종료
+        return {"error": "Skill lookup failed repeatedly; aborted.",
+                "error_code": "SKILL_LOOKUP_FATAL"}
+    return None
+
+child = Agent(..., before_tool_callback=guard_block_fail,
+              after_tool_callback=guard_count_fail)
 ```
 
-2. **프롬프트 가드 백포트** — 자식 instruction에 추가:
-   - "If a skill tool returns any error, do NOT retry. Report the error and stop." (#5652)
-   - "Loading a skill does NOT complete your turn — continue and produce a reply. Never end with an empty response." (#6225)
-3. **AgentTool 오류 가시화** — AgentTool 서브클래스에서 `event.error_message`를 추적해
-   빈 결과 대신 오류 문자열 반환 (`e737f229` 백포트). 부모의 빈-결과 재호출 루프 차단.
-4. **상한 축소** — 부모 `RunConfig(max_llm_calls=50)` 수준 + 부모 instruction에
-   "도구가 빈 결과/오류를 반환하면 재호출하지 말고 사용자에게 보고" 명시.
-5. **스킬 정합성 사전 검증** — SkillToolset에 넣는 skill name(kebab-case)·리소스 경로가
-   실제 존재하는지 로드 시점에 assert (불일치가 루프의 트리거).
+**② SafeAgentTool — `''` 반환 방지 + wall-time 절단** (`e737f229`·`b983fcf9` 백포트).
+①의 하드스톱으로 끝나면 마지막 이벤트가 function_response뿐이라 v1.26.0 AgentTool은
+`''`를 반환하고, 부모가 재호출하는 s3 루프가 남는다. 이를 차단:
+
+```python
+class SafeAgentTool(AgentTool):
+    async def run_async(self, *, args, tool_context):
+        result = await asyncio.wait_for(
+            super().run_async(args=args, tool_context=tool_context), timeout=120)
+        if not result:
+            return ("Child agent failed to produce output (skill lookup errors). "
+                    "Do NOT call this tool again; report the failure to the user.")
+        return result
+```
+
+**③ 부모 안전판** — `RunConfig(max_llm_calls=50)` 수준 축소 + 부모 instruction에
+"도구가 빈 결과/오류를 반환하면 재호출하지 말고 사용자에게 보고" 명시.
+
+**검증 (s5)**: s1과 동일한 폭주 조건에서 ①+②만으로
+자식 LLM 스텝 **500 → 4**, 부모 재호출 0회, peak RSS 109MB로 즉시 종료.
+
+보조 조치:
+- **프롬프트 가드 백포트** — 자식 instruction에: "If a skill tool returns any error, do
+  NOT retry. Report the error and stop." (#5652) / "Loading a skill does NOT complete
+  your turn — continue and produce a reply." (#6225)
+- **스킬 정합성 사전 검증** — skill name(kebab-case)·리소스 경로가 실제 존재하는지 로드
+  시점에 assert (불일치가 루프의 트리거).
+- 자식 코드를 못 건드리면 ①을 **plugin**으로 구현 — `include_plugins=True`(기본)로
+  자식 Runner까지 상속된다.
 
 ### 5-2. 운영 관측 (재발 감지)
 
