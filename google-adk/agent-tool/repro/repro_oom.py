@@ -2,7 +2,6 @@
 
 시나리오:
   s1  자식 skill 무한 재시도 루프 (작은 페이로드) → max_llm_calls=500 상한에서 예외로 종료됨을 확인
-  s2  큰 스킬(8MB) + 동일 루프 → 메모리 폭증, 워치독(700MB)이 OOM 직전에 차단
   s3  자식이 load_skill 후 빈 응답으로 종료 → AgentTool이 '' 반환 → 부모가 재호출(곱셈 구조)
   s4  [대조군] 동일 자식을 sub-agent(transfer)로 실행 → 이벤트 가시성 + 공유 상한 확인
   s5  [개선안 검증] s1과 동일한 폭주 조건 + 3중 방어(콜백 카운터/차단/하드스톱 + SafeAgentTool)
@@ -81,15 +80,10 @@ class ChildRetryLlm(BaseLlm):
   async def generate_content_async(self, llm_request, stream=False):
     COUNTS["child_llm"] += 1
     n = COUNTS["child_llm"]
-    if SCENARIO == "s2" and n % 2 == 1:
-      # 대형 스킬 본문(8MB)을 세션에 적재시키는 성공 호출
-      yield LlmResponse(content=model_content(
-          [fc_part("load_skill", {"name": "demo-skill"})]))
-    else:
-      yield LlmResponse(content=model_content(
-          [fc_part("load_skill_resource",
-                   {"skill_name": "demo-skill",
-                    "path": f"references/guess_{n}.md"})]))
+    yield LlmResponse(content=model_content(
+        [fc_part("load_skill_resource",
+                 {"skill_name": "demo-skill",
+                  "path": f"references/guess_{n}.md"})]))
 
 
 class ChildEmptyEndLlm(BaseLlm):
@@ -208,7 +202,7 @@ class SafeAgentTool(AgentTool):
 
 # ── 에이전트 구성 ────────────────────────────────────────────────────────────
 def build_skill() -> sk.Skill:
-  body = "A" * (8_000_000 if SCENARIO == "s2" else 200)
+  body = "A" * 200
   return sk.Skill(
       frontmatter=sk.Frontmatter(name="demo-skill",
                                  description="A demo skill for repro"),
@@ -232,7 +226,7 @@ def build_child(model) -> Agent:
 async def main() -> None:
   log(f"=== 시나리오 {SCENARIO} 시작 (adk 1.26.0, mock LLM) ===")
 
-  if SCENARIO in ("s1", "s2"):
+  if SCENARIO == "s1":
     child = build_child(ChildRetryLlm(model="mock-child"))
     parent = Agent(name="parent_agent", model=ParentLlm(model="mock-parent"),
                    instruction="Delegate to child.",
