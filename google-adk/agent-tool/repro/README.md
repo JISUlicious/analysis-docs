@@ -99,17 +99,50 @@ child = Agent(...,
 코드는 `repro_oom.py`의 `guard_count_fail` / `guard_block_fail` / `SafeAgentTool` 참고
 (그대로 복사해 사용 가능).
 
-## 5. 실환경 계측 probe (스텝당 메모리 질량 출처 확정용)
+## 5. 단계별 관측 probe 모듈 — [`stage_probes.py`](stage_probes.py)
 
-mock 재현은 모델 클라이언트 경로(예: LiteLlm→로컬 서빙)를 포함하지 않는다. 실환경에서
-스텝당 소모량의 출처를 확정하려면 자식 before_model에:
+각 실행 단계(agent 진입/종료 · 모델 호출 전/후 · 도구 실행 전/후)에서
+**① 단계 도달, ② 그 시점의 RSS, ③ 들어온 요청 내용**을 한 줄 로그로 남기는 콜백 모음.
+AgentTool 내부의 자식 에이전트까지 관측한다. 두 방식 모두 v1.26.0에서 동작 검증됨.
+
+**방식 A — 에이전트 트리 일괄 주입** (Runner를 제어할 수 없을 때, 예: `adk web`):
 
 ```python
-def probe_request_size(*, callback_context, llm_request):
-    size = len(llm_request.model_dump_json(exclude_none=True))
-    print(f"[MEM] contents={len(llm_request.contents)}건 request={size/1e6:.2f}MB")
-    return None
+from stage_probes import attach_stage_probes
+attach_stage_probes(root_agent)   # root_agent 정의 직후 1줄
+# sub_agents + AgentTool.agent 경로를 재귀 순회하며 6종 콜백을 append 주입
 ```
 
-스텝당 `request` 크기와 프로세스 RSS 증가율을 함께 기록하면, 질량이 요청 데이터(히스토리/도구
-응답)에서 오는지 모델 클라이언트 계층에서 오는지 분리된다.
+**방식 B — Plugin** (Runner/App을 직접 구성할 때; 모델/도구 **오류 훅까지** 커버):
+
+```python
+from stage_probes import StageProbePlugin
+runner = InMemoryRunner(agent=root_agent, app_name=..., plugins=[StageProbePlugin()])
+# AgentTool의 include_plugins=True(기본)가 자식 Runner까지 상속시킨다
+```
+
+실측 출력 예 (부모→AgentTool→자식, 자식이 리소스 오류를 받는 경우):
+
+```
+[0.00s rss=107.5MB] >>AGENT  agent=parent_agent | 진입 | user_content=user:[text:"go"]
+[0.00s rss=107.6MB] >>MODEL  agent=parent_agent | step=1 | contents=1건 req=0.00MB | last=user:[text:"go"]
+[0.00s rss=107.7MB] <<MODEL  agent=parent_agent | 응답=model:[fc:child_agent({'request': 'do the task'})]
+[0.00s rss=107.7MB] >>TOOL   agent=parent_agent | child_agent({'request': 'do the task'})
+[0.00s rss=107.7MB] >>AGENT  agent=child_agent | 진입 | user_content=user:[text:"do the task"]   ← AgentTool 경계 안쪽
+[0.00s rss=107.8MB] >>TOOL   agent=child_agent | load_skill_resource({'skill_name': 'demo-skill', 'path': 'references/none.md'})
+[0.00s rss=107.8MB] <<TOOL   agent=child_agent | load_skill_resource → {'error': ...} ★오류 RESOURCE_NOT_FOUND
+[0.00s rss=107.8MB] >>MODEL  agent=child_agent | step=2 | contents=3건 req=0.00MB | last=user:[fr:load_skill_resource→{'error': ...}]
+...
+[0.00s rss=107.8MB] <<AGENT  agent=parent_agent | 종료
+```
+
+읽는 법:
+- `>>MODEL`의 `rss`와 `req` 크기를 스텝 순으로 따라가면 **메모리 증가가 요청 데이터(히스토리/도구 응답)에서
+  오는지, 모델 클라이언트 계층에서 오는지** 분리된다 (req는 평탄한데 rss만 증가하면 후자).
+- `<<TOOL`의 `★오류` 표시가 같은 도구에서 반복되면 재시도 루프 진입 신호.
+- mock 재현은 모델 클라이언트 경로(예: LiteLlm→로컬 서빙)를 포함하지 않으므로,
+  실환경 질량 출처 확정은 이 probe를 실환경에 달아 수행한다.
+
+주의: probe 콜백/훅은 반드시 `None`을 반환해야 하며(값 반환 시 해당 단계를 오버라이드),
+plugin의 `close()`는 AgentTool 자식 Runner가 조기 호출할 수 있으므로 무해해야 한다
+(모듈에 반영되어 있음).
