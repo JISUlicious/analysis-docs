@@ -5,7 +5,8 @@
 ```
 google-adk/
 ├── planreact-planner/   PlanReActPlanner — 프롬프트가 단계별로 어떻게 변하는가
-└── agent-tool/          AgentTool — 에이전트를 도구로 감쌌을 때의 동작
+├── agent-tool/          AgentTool — 에이전트를 도구로 감쌌을 때의 동작
+└── web-server/          AdkWebServer — 세션 라이프사이클·메모리, 잔존 실행 관측
 ```
 
 ---
@@ -64,3 +65,20 @@ google-adk/
 - 상태는 **양방향** — 시작 시 부모 state 복사 입력, 실행 중 자식 `state_delta`를 부모로 역전파.
 - **tool 이름 = `agent.name`**, 설명 = `agent.description` (별도 rename 옵션 없음).
 - 리소스: 아티팩트·자격증명은 공유, **메모리·세션은 격리**, 플러그인은 `include_plugins`로 선택.
+
+## 3. AdkWebServer — 세션 라이프사이클과 메모리 관측
+
+📁 [`google-adk/web-server/`](google-adk/web-server/)
+
+| 문서 | 내용 |
+|---|---|
+| [세션 라이프사이클 · 메모리 분석](google-adk/web-server/AdkWebServer_세션_라이프사이클_메모리분석.md) | 마스터/스냅샷 구조(재사용 없음은 의도), 요청 스코프 객체 회수 실측, InMemory↔Database 성장 벡터 비교, `delete_session` 계약, cleanup 권고 |
+| [잔존 실행 관측 구현명세](google-adk/web-server/AdkWebServer_잔존실행_관측_구현명세.md) | RunTrackerPlugin·객체 프로브·디버그 API·주기 메모리 census(C1~C5) 명세 — **1.26.0 실검증 완료(9/9)**, 구현 함정 2건 반영 |
+| [참조 구현 + 검증 테스트](google-adk/web-server/test_runtracker.py) | 명세의 참조 구현과 T1~T6 검증 스크립트 (mock LLM, 네트워크 불필요) |
+
+### 핵심 요약
+
+- 세션 스냅샷을 매 요청 새로 만드는 것은 **격리를 위한 의도된 설계**이며, 정상 경로에서 요청 스코프 객체는 **전부 회수됨** (weakref/gc 실측).
+- "잔존 인스턴스"는 **잔존 실행(버려진 `/run_sse` 등)의 그림자** — 실행 중 invocation당 `Session 1 + InvocationContext 2`, 종료 시 수 턴 내 회수.
+- 실제 성장 벡터: **(A)** InMemory 마스터 무한 성장(evict 없음) **(B)** SSE 끊김 미처리(1.26.0, upstream `6a533573`이 후속 수정) **(C)** 요청당 전체 히스토리 로드.
+- 관측 체계: after_run이 finally가 아닌 성질을 이용한 RunTracker 판정 + 코루틴 객체 열거 기반 정지 지점 덤프(`Task.get_stack()`·FrameType 열거는 함정) + 주기 census로 점진 증가 귀속.
