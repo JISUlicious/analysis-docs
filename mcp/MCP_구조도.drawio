@@ -1,87 +1,93 @@
 <mxfile host="app.diagrams.net" agent="claude-code" version="24.0.0">
   <diagram id="mcp-structure" name="MCP 구조도">
-    <mxGraphModel dx="1200" dy="820" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="860" math="0" shadow="0">
+    <mxGraphModel dx="1200" dy="880" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="920" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
-        <mxCell id="title" value="MCP 구조 — 프로토콜 계층 · 프리미티브 · 세션 라이프사이클 · ADK 매핑" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="10" width="760" height="30" as="geometry" />
+        <mxCell id="title" value="MCP 구조 — 현행 stateless 코어(2026-07-28) 기준 · 계층 / 프리미티브 / 요청 흐름 / ADK 매핑" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="10" width="900" height="30" as="geometry" />
         </mxCell>
 
         <mxCell id="stack_label" value="① 프로토콜 계층" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=13;fontStyle=1;" vertex="1" parent="1">
           <mxGeometry x="20" y="50" width="200" height="24" as="geometry" />
         </mxCell>
-        <mxCell id="layer_data" value="데이터 계층 (전송과 무관하게 동일)&#10;· 라이프사이클: initialize / capability 협상 / initialized&#10;· 프리미티브: tools · resources · prompts / sampling · roots · elicitation&#10;· 알림: notifications/*/list_changed, progress, logging" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="20" y="80" width="420" height="90" as="geometry" />
+        <mxCell id="layer_data" value="데이터 계층 — stateless (요청 자기완결)&#10;· 매 요청 _meta에 프로토콜 버전·클라이언트 capability·identity 포함&#10;· server/discover — 서버의 버전·capability 광고 (필수 구현)&#10;· MRTR — 서버발 상호작용을 input_required 결과 + 재시도로&#10;· subscriptions/listen — opt-in 알림 스트림 (list_changed 등)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="80" width="440" height="104" as="geometry" />
         </mxCell>
-        <mxCell id="layer_rpc" value="JSON-RPC 2.0  (요청 / 응답 / 알림 · stateful 세션)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="20" y="170" width="420" height="36" as="geometry" />
+        <mxCell id="layer_rpc" value="JSON-RPC 2.0  (요청 / 응답 / 알림)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="184" width="440" height="34" as="geometry" />
         </mxCell>
-        <mxCell id="layer_tr" value="전송 계층 (교체 가능)&#10;stdio (로컬·서브프로세스)   |   Streamable HTTP (원격, 2025-03-26~)   |   HTTP+SSE (legacy)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="20" y="206" width="420" height="50" as="geometry" />
-        </mxCell>
-
-        <mxCell id="prim_label" value="② 프리미티브 (capability 협상된 것만 사용 가능)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=13;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="480" y="50" width="400" height="24" as="geometry" />
-        </mxCell>
-        <mxCell id="prim_srv" value="서버 프리미티브 (서버 → 호스트)&#10;&#10;Tools — 모델이 호출 결정 (model-controlled)&#10;    tools/list · tools/call · inputSchema(JSON Schema)&#10;Resources — 앱이 선택 (app-controlled)&#10;    resources/list · resources/read · subscribe · URI 식별&#10;Prompts — 사용자가 선택 (user-controlled)&#10;    prompts/list · prompts/get" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
-          <mxGeometry x="480" y="80" width="340" height="176" as="geometry" />
-        </mxCell>
-        <mxCell id="prim_cli" value="클라이언트 프리미티브 (호스트 → 서버 제공)&#10;&#10;Sampling — 서버가 호스트 LLM 호출을 요청&#10;Roots — 작업 범위(디렉터리 등) 통지&#10;Elicitation — 실행 중 사용자 입력/확인 요청&#10;&#10;(SDK ClientSession: sampling_callback ·&#10; list_roots_callback · elicitation_callback)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
-          <mxGeometry x="840" y="80" width="340" height="176" as="geometry" />
+        <mxCell id="layer_tr" value="전송 계층 (교체 가능)&#10;stdio (로컬)  |  Streamable HTTP (원격 · 세션 헤더 없음 · Mcp-Method/Mcp-Name 라우팅 헤더 · SSE 재개 제거)&#10;HTTP+SSE — Deprecated" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=8;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="218" width="440" height="64" as="geometry" />
         </mxCell>
 
-        <mxCell id="lc_label" value="③ 세션 라이프사이클 (Client ↔ Server)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=13;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="290" width="400" height="24" as="geometry" />
+        <mxCell id="prim_label" value="② 프리미티브" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="500" y="50" width="400" height="24" as="geometry" />
         </mxCell>
-        <mxCell id="l1" value="initialize 요청&#10;(프로토콜 버전 +&#10;클라이언트 capability)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="20" y="320" width="170" height="60" as="geometry" />
+        <mxCell id="prim_srv" value="서버 프리미티브 (서버 → 호스트) — 3종 유지&#10;&#10;Tools — 모델이 호출 결정 (model-controlled)&#10;    tools/list · tools/call · JSON Schema 2020-12&#10;Resources — 앱이 선택 (app-controlled)&#10;    resources/list · resources/read · URI 식별&#10;Prompts — 사용자가 선택 (user-controlled)&#10;    prompts/list · prompts/get&#10;&#10;※ list/read 결과에 ttlMs·cacheScope 필수(캐시),&#10;   tools/list는 결정적 순서 권장(프롬프트 캐시)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="500" y="80" width="330" height="202" as="geometry" />
         </mxCell>
-        <mxCell id="l2" value="initialize 응답&#10;(버전 합의 +&#10;서버 capability)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="220" y="320" width="170" height="60" as="geometry" />
+        <mxCell id="prim_cli" value="클라이언트 방향 (호스트 → 서버 제공)&#10;&#10;Elicitation — 사용자 입력/확인 요청&#10;    ✔ 유지 — 단, MRTR로 전달 방식 변경&#10;    (서버발 요청 → input_required 결과)&#10;&#10;Sampling — 호스트 LLM 빌려 쓰기&#10;    ⚠ Deprecated (대안: LLM API 직접 사용)&#10;Roots — 작업 범위 통지&#10;    ⚠ Deprecated (대안: tool 인자·설정)&#10;Logging — ⚠ Deprecated (대안: stderr/OTel)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="850" y="80" width="330" height="202" as="geometry" />
         </mxCell>
-        <mxCell id="l3" value="notifications/&#10;initialized" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="420" y="320" width="140" height="60" as="geometry" />
+
+        <mxCell id="lc_label" value="③ 요청 흐름 (stateless — initialize 핸드셰이크 없음)" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="310" width="480" height="24" as="geometry" />
         </mxCell>
-        <mxCell id="l4" value="tools/list&#10;(도구 목록 획득 →&#10;LLM에 선언 제공)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="590" y="320" width="160" height="60" as="geometry" />
+        <mxCell id="l1" value="(선택) server/discover&#10;서버의 지원 버전·&#10;capability 확인" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#999999;dashed=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="20" y="340" width="160" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="l5" value="tools/call&#10;(모델 함수콜 →&#10;서버 실행 → 결과)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="780" y="320" width="160" height="60" as="geometry" />
+        <mxCell id="l2" value="tools/list&#10;(_meta: 버전·capability·&#10;identity 자체 포함)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="210" y="340" width="170" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="l6" value="notifications/tools/&#10;list_changed&#10;→ 목록 재조회" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="970" y="320" width="160" height="60" as="geometry" />
+        <mxCell id="l3" value="tools/call&#10;(모델 함수콜 →&#10;서버 실행)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="410" y="340" width="150" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="le1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="l1" target="l2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="l4" value="resultType?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="590" y="335" width="130" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="l5" value="&quot;complete&quot;&#10;→ 결과 사용" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="335" width="140" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="l6" value="&quot;input_required&quot; (MRTR)&#10;inputRequests 수신 →&#10;사용자 입력 획득 →&#10;inputResponses 싣고 원 요청 재시도" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="760" y="410" width="230" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="l7" value="subscriptions/listen (선택·별도 스트림)&#10;opt-in 알림: tools/prompts/resources&#10;list_changed, 리소스 구독" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#82b366;dashed=1;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="20" y="420" width="250" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="legacy" value="구모델(≤2025-11-25): initialize → capability 협상 → initialized 핸드셰이크로 stateful 세션 수립 후 운용.&#10;세션·핸드셰이크·서버발 역방향 요청·SSE 재개는 2026-07-28에서 제거/대체됨." style="shape=note;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6b656;align=left;spacingLeft=6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="300" y="420" width="430" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="le1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;" edge="1" parent="1" source="l1" target="l2"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="le2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="l2" target="l3"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="le3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="l3" target="l4"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="le4" value="반복" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="l4" target="l5"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="le5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;" edge="1" parent="1" source="l5" target="l6"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="le6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#b85450;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="l6" target="l4">
-          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1050" y="300" /><mxPoint x="670" y="300" /></Array></mxGeometry>
+        <mxCell id="le4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="l4" target="l5"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="le5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;strokeColor=#b85450;" edge="1" parent="1" source="l4" target="l6"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="le6" value="재시도" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#b85450;fontColor=#b85450;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="l6" target="l3">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="485" y="445" /></Array></mxGeometry>
         </mxCell>
 
-        <mxCell id="adk_label" value="④ ADK(google-adk 1.26.0)의 MCP 호스트 구현 매핑" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=13;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="420" width="500" height="24" as="geometry" />
+        <mxCell id="adk_label" value="④ ADK(google-adk 1.26.0)의 MCP 호스트 구현 매핑 — ⚠ SDK 1.x 핀 = 구모델(stateful) 클라이언트" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="510" width="700" height="24" as="geometry" />
         </mxCell>
         <mxCell id="adk_box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3eef7;strokeColor=#9673a6;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="20" y="450" width="1160" height="270" as="geometry" />
+          <mxGeometry x="20" y="540" width="1160" height="280" as="geometry" />
         </mxCell>
         <mxCell id="adk_ts" value="McpToolset (BaseToolset)&#10;──────────────&#10;get_tools() → tools/list 후&#10;각 도구를 McpTool로 변환&#10;read/list_resources() → resources/*&#10;tool_filter · get_auth_config()&#10;close() ← Runner.close()가 일괄 호출" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
-          <mxGeometry x="40" y="485" width="280" height="150" as="geometry" />
+          <mxGeometry x="40" y="575" width="280" height="150" as="geometry" />
         </mxCell>
-        <mxCell id="adk_sm" value="MCPSessionManager&#10;──────────────&#10;ClientSession 생성·캐시·재연결&#10;연결 파라미터 3종:&#10;· StdioConnectionParams&#10;· SseConnectionParams (legacy)&#10;· StreamableHTTPConnectionParams" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
-          <mxGeometry x="360" y="485" width="280" height="150" as="geometry" />
+        <mxCell id="adk_sm" value="MCPSessionManager&#10;──────────────&#10;ClientSession 생성·캐시·재연결&#10;(구모델 initialize 세션 전제)&#10;연결 파라미터 3종:&#10;· StdioConnectionParams&#10;· SseConnectionParams (legacy)&#10;· StreamableHTTPConnectionParams" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="360" y="575" width="280" height="150" as="geometry" />
         </mxCell>
         <mxCell id="adk_tool" value="McpTool (BaseAuthenticatedTool)&#10;──────────────&#10;_get_declaration():&#10;  MCP inputSchema → FunctionDeclaration&#10;  (conversion_utils)&#10;run_async():&#10;  ADK 인증(헤더) → session.call_tool()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
-          <mxGeometry x="680" y="485" width="290" height="150" as="geometry" />
+          <mxGeometry x="680" y="575" width="290" height="150" as="geometry" />
         </mxCell>
-        <mxCell id="adk_note" value="mcp SDK&#10;1.29.0 실측:&#10;최신 프로토콜&#10;리비전&#10;2025-11-25" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6b656;align=left;spacingLeft=6;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="1000" y="485" width="160" height="100" as="geometry" />
+        <mxCell id="adk_note" value="SDK 실측&#10;· SDK 2.0.0 =&#10;  2026-07-28 (신모델)&#10;· SDK 1.29.0 =&#10;  2025-11-25 (구모델)&#10;· ADK 핀:&#10;  mcp&gt;=1.23,&lt;2.0&#10;  → 구모델 고정" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6b656;align=left;spacingLeft=6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="575" width="160" height="150" as="geometry" />
         </mxCell>
-        <mxCell id="adk_flow" value="에이전트 flow와의 접점: MCP 도구도 BaseTool → 함수콜 실행 경로(handle_function_calls_async)·toolset 라이프사이클(수집·close)을 그대로 따름.&#10;1.26.0 기준 tools 1급 + resources 보조, prompts 미노출. elicitation 콜백은 1.26.0 이후(48246195) 추가." style="text;html=1;strokeColor=none;fillColor=none;align=left;whiteSpace=wrap;fontSize=11;fontStyle=2;" vertex="1" parent="1">
-          <mxGeometry x="40" y="650" width="1120" height="55" as="geometry" />
+        <mxCell id="adk_flow" value="에이전트 flow와의 접점: MCP 도구도 BaseTool → 함수콜 실행 경로·toolset 라이프사이클(수집·close)을 그대로 따름. 1.26.0: tools 1급 + resources 보조, prompts 미노출.&#10;호환 유의: ADK(구모델 클라이언트) ↔ 2026-07-28 전용(stateless-only) 서버 조합은 협상 실패 가능 — 유예 기간 중엔 대부분의 서버가 양쪽 지원." style="text;html=1;strokeColor=none;fillColor=none;align=left;whiteSpace=wrap;fontSize=11;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="40" y="740" width="1120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="ae1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="adk_ts" target="adk_sm"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="ae2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="adk_sm" target="adk_tool"><mxGeometry relative="1" as="geometry" /></mxCell>

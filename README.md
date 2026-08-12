@@ -90,19 +90,20 @@ mcp/                     MCP(Model Context Protocol) — 개념·구조·다이�
 
 📁 [`mcp/`](mcp/)
 
-LLM 앱↔외부 시스템 통합 표준 프로토콜의 개념·구조 정리. mcp Python SDK 1.29.0
-(`LATEST_PROTOCOL_VERSION=2025-11-25` 상수)과 google-adk 1.26.0 `tools/mcp_tool/` 소스로 검증.
+LLM 앱↔외부 시스템 통합 표준 프로토콜의 개념·구조 정리. 공식 스펙 changelog(**2026-07-28
+stateless 개정**), mcp Python SDK 2.0.0(`2026-07-28`)·1.29.0(`2025-11-25`) 실측,
+google-adk 1.26.0 `tools/mcp_tool/` 소스로 검증.
 
 | 문서 | 내용 |
 |---|---|
-| [기본 개념과 구조](mcp/MCP_기본개념_구조.md) | N×M 문제, Host/Client/Server, JSON-RPC 기반·라이프사이클, 프리미티브 3+3, 전송 계층, 스펙 리비전 이력, ADK 통합 구조 |
+| [기본 개념과 구조](mcp/MCP_기본개념_구조.md) | N×M 문제, Host/Client/Server, **현행 stateless 코어(2026-07-28) vs 구모델(≤2025-11-25)**, 프리미티브(서버 3종 유지 / Sampling·Roots·Logging deprecated·MRTR), 전송, 리비전 이력, SDK·ADK 호환 현황 |
 | [개요도 (draw.io)](mcp/MCP_개요도.drawio) | Host ⊃ Client(1:1) ↔ Server 생태계, 전송별 연결, 역방향 프리미티브 |
 | [구조도 (draw.io)](mcp/MCP_구조도.drawio) | 프로토콜 계층 스택 · 프리미티브 상세 · 세션 라이프사이클 시퀀스 · ADK 매핑 |
 
 ### 핵심 요약
 
-- MCP = LLM 앱↔외부 시스템 통합의 공용 규격 (JSON-RPC 2.0 기반 stateful 프로토콜, N×M→N+M).
+- MCP = LLM 앱↔외부 시스템 통합의 공용 규격 (JSON-RPC 2.0, N×M→N+M).
 - 구조 = **Host ⊃ Client(서버당 1:1) ↔ Server** + 교체 가능한 전송(stdio / Streamable HTTP).
-- 프리미티브 대칭: 서버측 **Tools/Resources/Prompts**(model/app/user-controlled) ↔ 클라이언트측 **Sampling/Roots/Elicitation**.
-- capability 협상(initialize)된 기능만 세션에서 사용 가능.
-- ADK는 호스트 구현체 — `McpToolset→MCPSessionManager→McpTool`이 MCP tools를 ADK `BaseTool` 체계로 흡수 (1.26.0: tools 1급+resources 보조, prompts 미노출).
+- **2026-07-28부터 코어 stateless**: 세션·initialize 핸드셰이크 제거, 요청이 `_meta`로 자기기술, `server/discover`로 발견, 서버발 상호작용은 **MRTR**(input_required→재시도)·**subscriptions/listen**으로 재편.
+- 서버 프리미티브 **Tools/Resources/Prompts** 유지(+ttlMs/cacheScope 캐시 필드), 클라이언트측은 **Elicitation(MRTR)만 실질 존속** — Sampling/Roots/Logging deprecated(12개월+ 유예).
+- ADK는 호스트 구현체(`McpToolset→MCPSessionManager→McpTool`)이나 **`mcp<2.0` 핀 = 구모델 클라이언트** — stateless 전용 서버와의 호환 유의.

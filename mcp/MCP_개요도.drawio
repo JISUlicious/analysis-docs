@@ -9,8 +9,8 @@
           <mxGeometry x="20" y="10" width="640" height="30" as="geometry" />
         </mxCell>
 
-        <mxCell id="nxm" value="해결하는 문제: 통합 폭발&#10;표준화 전 = 앱 N × 대상 M 개의 커스텀 통합&#10;표준화 후 = 앱은 클라이언트 1회, 대상은 서버 1회 (N+M)&#10;→ 서버는 어느 호스트에서든 재사용" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6b656;align=left;spacingLeft=6;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="760" y="10" width="380" height="80" as="geometry" />
+        <mxCell id="nxm" value="해결하는 문제: 통합 폭발&#10;표준화 전 = 앱 N × 대상 M 개의 커스텀 통합&#10;표준화 후 = 앱은 클라이언트 1회, 대상은 서버 1회 (N+M)&#10;→ 서버는 어느 호스트에서든 재사용&#10;&#10;2026-07-28 리비전: 코어 stateless 전환 —&#10;세션·initialize 제거, 요청 자기완결(_meta)&#10;→ LB 뒤 아무 인스턴스나 처리 (수평 확장 용이)" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6b656;align=left;spacingLeft=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="760" y="10" width="380" height="130" as="geometry" />
         </mxCell>
 
         <mxCell id="host" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2ff;strokeColor=#6c8ebf;verticalAlign=top;" vertex="1" parent="1">
@@ -61,7 +61,7 @@
         <mxCell id="e2" value="stdio&#10;(JSON-RPC 2.0)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;startArrow=block;fontSize=10;" edge="1" parent="1" source="c2" target="s2">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="e3" value="Streamable HTTP&#10;(JSON-RPC 2.0)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;startArrow=block;fontSize=10;" edge="1" parent="1" source="c3" target="s3">
+        <mxCell id="e3" value="Streamable HTTP · 세션 없음&#10;(JSON-RPC 2.0, 2026-07-28~ stateless)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;startArrow=block;fontSize=10;" edge="1" parent="1" source="c3" target="s3">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;startArrow=block;dashed=1;strokeColor=#999999;" edge="1" parent="1" source="s1" target="x1">
@@ -74,13 +74,13 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <mxCell id="back" value="클라이언트 프리미티브 (역방향: 서버가 호스트 능력을 빌림)&#10;· Sampling — 서버가 호스트의 LLM 호출을 요청&#10;· Roots — 호스트가 작업 범위(디렉터리 등) 제공&#10;· Elicitation — 서버가 사용자에게 추가 입력/확인 요청" style="shape=note;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#82b366;align=left;spacingLeft=6;fontSize=11;" vertex="1" parent="1">
-          <mxGeometry x="400" y="580" width="390" height="90" as="geometry" />
+        <mxCell id="back" value="역방향 상호작용 (2026-07-28 현행)&#10;· Elicitation ✔ 유지 — MRTR 방식: 서버가 input_required 결과를&#10;  돌려주면 클라이언트가 입력을 실어 원 요청 재시도&#10;· Sampling / Roots / Logging ⚠ Deprecated (12개월+ 유예)" style="shape=note;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#82b366;align=left;spacingLeft=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="400" y="580" width="430" height="90" as="geometry" />
         </mxCell>
         <mxCell id="roles" value="역할 요약&#10;· Host — LLM을 품은 애플리케이션 (조율·보안)&#10;· Client — Host 내부, 서버와 1:1 연결 유지&#10;· Server — 도구·데이터·프롬프트를 표준 형식으로 노출&#10;서버 프리미티브: Tools(모델 제어) / Resources(앱 제어) / Prompts(사용자 제어)" style="shape=note;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6b656;align=left;spacingLeft=6;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="20" y="580" width="360" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="backedge" value="Sampling / Elicitation / Roots" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#82b366;fontColor=#82b366;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s3" target="c3">
+        <mxCell id="backedge" value="MRTR (input_required → 재시도)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#82b366;fontColor=#82b366;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="s3" target="c3">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="470" y="530" />
