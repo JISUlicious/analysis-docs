@@ -7,6 +7,7 @@ google-adk/
 ├── planreact-planner/   PlanReActPlanner — 프롬프트가 단계별로 어떻게 변하는가
 ├── agent-tool/          AgentTool — 에이전트를 도구로 감쌌을 때의 동작
 └── web-server/          AdkWebServer — 세션 라이프사이클·메모리, 잔존 실행 관측
+mcp/                     MCP(Model Context Protocol) — 개념·구조·다이어그램
 ```
 
 ---
@@ -82,3 +83,26 @@ google-adk/
 - "잔존 인스턴스"는 **잔존 실행(버려진 `/run_sse` 등)의 그림자** — 실행 중 invocation당 `Session 1 + InvocationContext 2`, 종료 시 수 턴 내 회수.
 - 실제 성장 벡터: **(A)** InMemory 마스터 무한 성장(evict 없음) **(B)** SSE 끊김 미처리(1.26.0, upstream `6a533573`이 후속 수정) **(C)** 요청당 전체 히스토리 로드.
 - 관측 체계: after_run이 finally가 아닌 성질을 이용한 RunTracker 판정 + 코루틴 객체 열거 기반 정지 지점 덤프(`Task.get_stack()`·FrameType 열거는 함정) + 주기 census로 점진 증가 귀속.
+
+---
+
+# MCP (Model Context Protocol)
+
+📁 [`mcp/`](mcp/)
+
+LLM 앱↔외부 시스템 통합 표준 프로토콜의 개념·구조 정리. mcp Python SDK 1.29.0
+(`LATEST_PROTOCOL_VERSION=2025-11-25` 상수)과 google-adk 1.26.0 `tools/mcp_tool/` 소스로 검증.
+
+| 문서 | 내용 |
+|---|---|
+| [기본 개념과 구조](mcp/MCP_기본개념_구조.md) | N×M 문제, Host/Client/Server, JSON-RPC 기반·라이프사이클, 프리미티브 3+3, 전송 계층, 스펙 리비전 이력, ADK 통합 구조 |
+| [개요도 (draw.io)](mcp/MCP_개요도.drawio) | Host ⊃ Client(1:1) ↔ Server 생태계, 전송별 연결, 역방향 프리미티브 |
+| [구조도 (draw.io)](mcp/MCP_구조도.drawio) | 프로토콜 계층 스택 · 프리미티브 상세 · 세션 라이프사이클 시퀀스 · ADK 매핑 |
+
+### 핵심 요약
+
+- MCP = LLM 앱↔외부 시스템 통합의 공용 규격 (JSON-RPC 2.0 기반 stateful 프로토콜, N×M→N+M).
+- 구조 = **Host ⊃ Client(서버당 1:1) ↔ Server** + 교체 가능한 전송(stdio / Streamable HTTP).
+- 프리미티브 대칭: 서버측 **Tools/Resources/Prompts**(model/app/user-controlled) ↔ 클라이언트측 **Sampling/Roots/Elicitation**.
+- capability 협상(initialize)된 기능만 세션에서 사용 가능.
+- ADK는 호스트 구현체 — `McpToolset→MCPSessionManager→McpTool`이 MCP tools를 ADK `BaseTool` 체계로 흡수 (1.26.0: tools 1급+resources 보조, prompts 미노출).
