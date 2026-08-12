@@ -1,0 +1,104 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.0.0">
+  <diagram id="prim-simple" name="기능 구성 (간단)">
+    <mxGraphModel dx="1100" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1000" pageHeight="560" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="MCP 프리미티브 기능 구성 — 누가 결정하고, 무엇을 얻는가" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="10" width="640" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="a_user" value="사용자" style="shape=umlActor;verticalLabelPosition=bottom;html=1;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="80" width="40" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="a_app" value="앱 (호스트)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef2ff;strokeColor=#6c8ebf;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="230" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="a_model" value="모델 (LLM)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="380" width="110" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p_prompt" value="Prompts&#10;(user-controlled)&#10;──────&#10;정형 작업 템플릿&#10;예: 슬래시 커맨드 /code_review" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="330" y="70" width="250" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="p_res" value="Resources&#10;(app-controlled)&#10;──────&#10;컨텍스트로 주입할 데이터 (읽기 전용)&#10;예: 파일 첨부, DB 스키마 선주입" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="330" y="215" width="250" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="p_tool" value="Tools&#10;(model-controlled)&#10;──────&#10;실행 가능한 동작&#10;예: 검색·조회·생성 API 호출" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="330" y="360" width="250" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="server" value="MCP Server&#10;──────&#10;세 프리미티브를&#10;capability로 광고하고&#10;list / get·read·call에 응답" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="750" y="200" width="200" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" value="명시적으로 선택" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=11;fontStyle=1;" edge="1" parent="1" source="a_user" target="p_prompt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="정책적으로 선별·주입" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=11;fontStyle=1;" edge="1" parent="1" source="a_app" target="p_res">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="호출을 결정" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=11;fontStyle=1;" edge="1" parent="1" source="a_model" target="p_tool">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="prompts/get" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;startArrow=block;fontSize=10;" edge="1" parent="1" source="p_prompt" target="server">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="resources/read" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;startArrow=block;fontSize=10;" edge="1" parent="1" source="p_res" target="server">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="tools/call" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;startArrow=block;fontSize=10;" edge="1" parent="1" source="p_tool" target="server">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note" value="같은 정보라도 어느 프리미티브로 노출하느냐가 제어권을 결정한다&#10;— 도구로 주면 모델이, 리소스로 주면 앱이, 프롬프트로 주면 사용자가 결정.&#10;서버 설계 = 이 세 노출 방식의 배분." style="shape=note;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6b656;align=left;spacingLeft=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="330" y="480" width="450" height="65" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="prim-detail" name="기능 구성 (상세)">
+    <mxGraphModel dx="1200" dy="860" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1220" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="MCP 프리미티브 기능 구성 (상세) — 메서드 · 공식 사용 사례 · 공통 요소  [2026-07-28 스펙 / SDK 2.0.0 실측]" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="10" width="960" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_tool" value="Tools — model-controlled&#10;━━━━━━━━━━━━━━&#10;메서드: tools/list → tools/call&#10;선언: name·description(모델의 판단 근거)&#10;  inputSchema/outputSchema(JSON Schema)&#10;  annotations(readOnly/destructive/&#10;  idempotent/openWorld — 자기신고 힌트)&#10;  execution.taskSupport(장기 실행)&#10;결과: content 블록 + structuredContent&#10;  + isError(모델에게 보이는 실행 오류)&#10;──────────────&#10;공식 사용 사례:&#10;· 검색·조회·생성 등 동작 API&#10;· destructive 힌트 → UI 승인 강도 조절&#10;· 결정적 목록 순서 → 프롬프트 캐시 적중&#10;안전: human-in-the-loop 승인이 전제" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="20" y="50" width="380" height="290" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_res" value="Resources — app-controlled&#10;━━━━━━━━━━━━━━&#10;메서드: resources/list ·&#10;  resources/templates/list(RFC 6570) ·&#10;  resources/read → text | blob(base64)&#10;선언: uri(스킴: file:// git:// https:// 커스텀)&#10;  mimeType·size·annotations&#10;  (audience/priority/lastModified)&#10;쓰기 메서드 없음 — 읽기 전용 카탈로그&#10;──────────────&#10;공식 사용 사례:&#10;· 파일·DB 스키마·앱 데이터 컨텍스트화&#10;· UI 트리/리스트 선택, 검색·필터&#10;· 휴리스틱/모델 선택 기반 자동 주입&#10;· 디렉터리 read → 여러 파일 일괄 반환&#10;· priority로 컨텍스트 포함 우선순위 결정" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="420" y="50" width="380" height="290" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_prompt" value="Prompts — user-controlled&#10;━━━━━━━━━━━━━━&#10;메서드: prompts/list → prompts/get&#10;선언: name·description·arguments&#10;  (completion API로 인자 자동완성)&#10;결과: user/assistant 메시지 시퀀스&#10;  (단일 문자열 아님 — 멀티턴·멀티모달)&#10;──────────────&#10;공식 사용 사례:&#10;· 슬래시 커맨드 (예제: code_review)&#10;· 이미지/오디오 포함 멀티모달 템플릿&#10;· resource_link로 데이터 참조 첨부&#10;· embedded resource로 문서·코드샘플&#10;  내장 (&quot;데이터 미리 끼운 템플릿&quot;)&#10;의미: 사용 시점 결정권이 사용자에게&#10;  (내용 작성 주체는 서버)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="820" y="50" width="380" height="290" as="geometry" />
+        </mxCell>
+
+        <mxCell id="link1" value="결과에 ResourceLink /&#10;EmbeddedResource 포함 가능" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#82b366;fontColor=#82b366;fontSize=10;exitX=1;exitY=0.85;exitDx=0;exitDy=0;entryX=0;entryY=0.85;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_tool" target="c_res">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="link2" value="메시지에 resource_link /&#10;embedded resource 포함 가능" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#82b366;fontColor=#82b366;fontSize=10;exitX=0;exitY=0.85;exitDx=0;exitDy=0;entryX=1;entryY=0.85;entryDx=0;entryDy=0;" edge="1" parent="1" source="c_prompt" target="c_res">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="common" value="공통 요소&#10;━━━━━━━━━━━━━━&#10;· 콘텐츠 블록 union: Text · Image · Audio · ResourceLink(참조만—토큰 절약) · EmbeddedResource(인라인)&#10;· 커서 페이지네이션(nextCursor) · 캐시 필드 필수(ttlMs / cacheScope, 2026-07-28~)&#10;· 변경 통지: notifications/*/list_changed — 현행은 subscriptions/listen 스트림 opt-in&#10;· MRTR: tools/call · resources/read · prompts/get 모두 resultType:&quot;input_required&quot;로&#10;  추가 입력을 요구하고 재시도로 이어갈 수 있음" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="20" y="400" width="780" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="scenario" value="조합 시나리오 (실무 확장 예)&#10;━━━━━━━━━━━━━━&#10;/incident-report 선택 (Prompt)&#10;→ 앱이 logs://checkout/today·런북 read (Resource)&#10;→ 모델이 query_metrics 호출 (Tool)&#10;→ 표준 양식 보고서" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3eef7;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="820" y="400" width="380" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="adk" value="ADK(1.26.0) 지원: Tools 1급(자동 도구 편입) · Resources 명시 API(자동 주입 없음 — 콜백에서 read하여 직접 주입) · Prompts 미노출" style="text;html=1;strokeColor=none;fillColor=none;align=left;whiteSpace=wrap;fontSize=11;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="20" y="565" width="1180" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

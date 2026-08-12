@@ -2,7 +2,7 @@
 
 > **검증 앵커**: mcp Python SDK **2.0.0** (`LATEST_PROTOCOL_VERSION=2026-07-28`)의 타입 정의를
 > 직접 introspect한 필드 구조 + 공식 스펙 changelog. 리비전 표기가 없는 내용은 리비전 무관.
-> 연관 문서: [기본 개념과 구조](MCP_기본개념_구조.md)
+> 연관 문서: [기본 개념과 구조](MCP_기본개념_구조.md) · [기능 구성도](MCP_프리미티브_기능구성.drawio)
 
 ---
 
@@ -176,7 +176,45 @@
 
 ---
 
-## 6. ADK 관점 (google-adk 1.26.0, 소스 확인 사실)
+## 6. 공식 문서에 실린 사용 사례 (2026-07-28 스펙 페이지 확인)
+
+### 6-1. Resources — 스펙이 직접 든 예시
+
+- **데이터 종류** (서두 정의): "files, **database schemas**, or application-specific information"
+- **UI 노출 3방식** (User Interaction Model 절, 원문):
+  1. "Expose resources through UI elements for explicit selection, **in a tree or list view**"
+  2. "Allow the user to **search through and filter** available resources"
+  3. "Implement **automatic context inclusion**, based on heuristics **or the AI model's
+     selection**" — app-controlled의 '앱'이 모델 휴리스틱을 쓸 수도 있음을 공식 인정
+- **프로토콜 예제 소재**: `file:///project/src/main.rs`(소스 파일), 디렉터리 read 시
+  **여러 파일 내용 일괄 반환**, 템플릿 `file:///{path}` "Project Files",
+  `README.md`+annotations → "Prioritize which resources to include in context" 등 활용처 명시
+- **표준 URI 스킴**: `https://`(클라이언트가 직접 fetch 가능할 때만), `file://`(파일시스템처럼
+  행동하되 "실제 물리 파일시스템일 필요는 없다"), `git://`(버전 관리), 커스텀 스킴 자유
+- `resources/read`도 **MRTR**(`InputRequiredResult`)로 응답 가능 — 읽기 전 추가 입력이
+  필요한 시나리오까지 공식 플로우
+
+### 6-2. Prompts — 스펙이 직접 든 예시
+
+- **UI 노출** (원문): "Typically, prompts would be triggered through **user-initiated
+  commands**... For example, as **slash commands**" (스크린샷 포함)
+- user-controlled의 정확한 의미 (원문): "This refers to **who decides when the prompt is
+  used, not who authors its content**" — 사용 시점 결정권이지 내용 작성 주체가 아님
+- **대표 예제 `code_review`**: 인자 `code`(required) → `prompts/get` →
+  "Please review this Python code:..." 메시지 반환 — 페이지 전체가 이 예제로 구성
+- **멀티모달·리소스 결합**: Image/Audio 콘텐츠("multi-modal interactions"),
+  `resource_link`("without embedding the resource contents directly"),
+  embedded resource("documentation, **code samples**, or other reference materials")
+- `prompts/get`도 **MRTR** 응답 가능
+
+### 6-3. 실무 확장 사례 (스펙 명시는 아님 — 위 원칙들의 조합)
+
+- **few-shot 내장 템플릿** — user/assistant 교대 메시지 구조가 지원 (스펙에 명시 사례 없음)
+- **조직 표준 워크플로의 중앙 배포** — user-controlled + 서버 중앙 관리 성질의 응용
+- **IDE 현재 파일 자동 주입**, **장애 분석 조합 시나리오**(Prompt로 절차 소환 + Resource로
+  로그/런북 주입 + Tool로 메트릭 조회) — 공식 3원칙의 실무 조합
+
+## 7. ADK 관점 (google-adk 1.26.0, 소스 확인 사실)
 
 | 프리미티브 | ADK 지원 |
 |---|---|
