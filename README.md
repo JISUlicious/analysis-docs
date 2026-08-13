@@ -100,6 +100,7 @@ google-adk 1.26.0 `tools/mcp_tool/` 소스로 검증.
 | [프리미티브 상세](mcp/MCP_프리미티브_상세.md) | Tools/Resources/Prompts 심층 — SDK 2.0.0 실측 필드 구조, 메서드·결과 형식, ToolAnnotations, URI 템플릿, 콘텐츠 블록, 비교표, ADK 지원 현황 |
 | [SDK 2.0.0 분석](mcp/MCP_SDK_2.0_분석.md) | 1.29.0↔2.0.0 API 표면 실측 diff — FastMCP→MCPServer(stateless 유일 모드), 신규 고수준 Client(MRTR 자동 루프·캐시), 타입 31+/17-, 듀얼 프로토콜 하위호환, ADK 영향과 마이그레이션 체크리스트 |
 | [도구 응답 실전 패턴](mcp/MCP_도구응답_실전패턴.md) | 공식 레퍼런스 서버 7종 소스 조사 + FastMCP 반환 변환 규칙 + 타입별(텍스트/dict/파일/URL) wire 응답 실측 — 1·2세대 패턴, FastMCP 함정, ADK 소비 관점 |
+| [다중 서버 단일 프로젝트 구성](mcp/MCP_다중서버_단일프로젝트_구성.md) | 한 파이썬 프로젝트로 URL별 분리된 MCP 서버 N개 제공 — path 분리(A안)·포트 분리(B안) 모두 PoC 검증, 배포 분리 확장(C안), lifespan 함정, 운영 비교표 (+PoC 스크립트 2종) |
 | [프리미티브 기능 구성도 (draw.io)](mcp/MCP_프리미티브_기능구성.drawio) | 2페이지 — (간단) 제어 주체→프리미티브→서버 구성 / (상세) 메서드·공식 사용 사례·공통 요소·조합 시나리오 |
 | [개요도 (draw.io)](mcp/MCP_개요도.drawio) | Host ⊃ Client(1:1) ↔ Server 생태계, 전송별 연결, 역방향 프리미티브 |
 | [구조도 (draw.io)](mcp/MCP_구조도.drawio) | 프로토콜 계층 스택 · 프리미티브 상세 · 세션 라이프사이클 시퀀스 · ADK 매핑 |
