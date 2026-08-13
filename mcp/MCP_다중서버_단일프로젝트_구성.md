@@ -5,7 +5,8 @@
 > **검증**: 두 방식 모두 mcp SDK 1.29(FastMCP, `stateless_http=True`) + uvicorn으로
 > 실제 구동·클라이언트 접속·도구 격리·호출까지 확인. PoC: [`multi_mcp_poc.py`](multi_mcp_poc.py)(A안),
 > [`multi_mcp_ports_poc.py`](multi_mcp_ports_poc.py)(B안),
-> [`multi_mcp_layered_poc.py`](multi_mcp_layered_poc.py)(§5 레이어 분리 + 환경변수 제어 — **최종 권장 형태**).
+> [`multi_mcp_layered_poc.py`](multi_mcp_layered_poc.py)(§5 레이어 분리 + 환경변수 제어 — **최종 권장 형태**),
+> [`multi_mcp_auth_poc.py`](multi_mcp_auth_poc.py)(§7 서버별 Bearer 인증).
 
 ---
 
@@ -169,3 +170,114 @@ MCP_SERVERS=calc       [path] :8765/calc/mcp → ['add']   (text 미기동)
    - ADK: `McpToolset(connection_params=StreamableHTTPConnectionParams(url="https://host/calc/mcp"))`
    - Claude Code: `claude mcp add --transport http calc https://host/calc/mcp`
 5. 헬스체크는 루트 앱에 별도 route(`/healthz`)로 — MCP 엔드포인트와 분리.
+
+## 7. 인증 미들웨어 — 서버(mount)별 Bearer 토큰 (✅ 검증됨)
+
+mount 단위로 순수 ASGI 래퍼를 끼우면 서버별 독립 토큰이 된다. 검증 결과:
+
+```
+① 무토큰            → HTTP 401
+② calc에 text 토큰  → HTTP 401   (서버별 토큰 격리)
+③ 정상 토큰(calc)   → 도구 ['add'], add(1,2)=3   (정상 MCP 세션)
+④ /healthz 무인증   → HTTP 200   (프로브 경로는 인증 밖)
+```
+
+```python
+class BearerAuth:                       # 순수 ASGI 래퍼 — 프레임워크 무관
+    def __init__(self, app, token: str):
+        self.app, self.expected = app, f"Bearer {token}"
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            hdrs = dict(scope.get("headers") or [])
+            if hdrs.get(b"authorization", b"").decode() != self.expected:
+                resp = JSONResponse({"error": "unauthorized"}, status_code=401)
+                return await resp(scope, receive, send)
+        return await self.app(scope, receive, send)
+
+# 배포 레이어에서: 토큰은 환경변수(MCP_AUTH_TOKENS="calc=...,text=...") ← k8s Secret
+Mount(f"/{n}", app=BearerAuth(srv.streamable_http_app(), TOKENS[n]))
+```
+
+- B안(포트 분리)에서도 동일 — `uvicorn.Config(BearerAuth(app, tok), port=...)`.
+- `/healthz`는 mount 밖 루트 route라 자연히 인증 제외 (k8s 프로브용).
+- **클라이언트 쪽 등록**:
+  - ADK: `StreamableHTTPConnectionParams(url=..., headers={"Authorization": "Bearer <tok>"})`
+  - Claude Code: `claude mcp add --transport http calc <url> --header "Authorization: Bearer <tok>"`
+- 스펙 정합 참고: 정적 Bearer는 사내/내부용 실용 해법이다. 외부 공개 서비스라면 스펙의
+  **OAuth 2.1 리소스 서버** 모델(FastMCP `auth`/`token_verifier` 파라미터)로 올리는 것이
+  정식 경로 — 미들웨어 자리는 동일하므로 교체 비용은 국소적.
+- 토큰별로 노출 도구를 달리하고 싶으면: 스펙상 목록의 "연결별" 가변은 금지지만
+  **자격증명별 가변은 허용** — 다만 그 수준이 필요해지면 서버를 더 쪼개는 편이 단순하다.
+
+## 8. k8s 매니페스트 (구체)
+
+"매니페스트"는 곧 아래 4종 리소스다. **A안 통합 배포** 기준 전체:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata: {name: mcp-auth}
+stringData:
+  tokens: "calc=tok-calc,text=tok-text"        # MCP_AUTH_TOKENS 형식 그대로
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: mcp-hub}
+spec:
+  replicas: 2                                   # stateless라 자유롭게 증설 (어피니티 불필요)
+  selector: {matchLabels: {app: mcp-hub}}
+  template:
+    metadata: {labels: {app: mcp-hub}}
+    spec:
+      containers:
+      - name: mcp-hub
+        image: registry.example.com/mcp-hub:1.0.0
+        env:
+        - {name: MCP_HOST, value: "0.0.0.0"}    # ★ 컨테이너 필수 (기본 127.0.0.1이면 외부 접속 불가)
+        - {name: MCP_HTTP_PORT, value: "8765"}
+        # MCP_SERVE_MODE=path, MCP_SERVERS=전체 → 기본값이라 생략
+        - name: MCP_AUTH_TOKENS
+          valueFrom: {secretKeyRef: {name: mcp-auth, key: tokens}}
+        ports: [{containerPort: 8765}]
+        readinessProbe: {httpGet: {path: /healthz, port: 8765}}
+        livenessProbe:  {httpGet: {path: /healthz, port: 8765}, periodSeconds: 30}
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {memory: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: mcp-hub}
+spec:
+  selector: {app: mcp-hub}
+  ports: [{port: 80, targetPort: 8765}]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: {name: mcp-hub}
+spec:
+  rules:
+  - host: mcp.example.com
+    http:
+      paths:                                    # path 분리가 ingress에 그대로 대응
+      - {path: /calc, pathType: Prefix, backend: {service: {name: mcp-hub, port: {number: 80}}}}
+      - {path: /text, pathType: Prefix, backend: {service: {name: mcp-hub, port: {number: 80}}}}
+```
+
+사용자 등록 URL: `https://mcp.example.com/calc/mcp`, `https://mcp.example.com/text/mcp`.
+
+**C안(배포 분리)으로 전환 시 바뀌는 부분만**:
+
+```yaml
+# Deployment를 서버별로 복제 (동일 이미지) — env만 다름
+#   mcp-calc:  env MCP_SERVERS=calc   + Service mcp-calc
+#   mcp-text:  env MCP_SERVERS=text   + Service mcp-text
+# Ingress의 백엔드만 각 Service로 교체:
+      - {path: /calc, pathType: Prefix, backend: {service: {name: mcp-calc, port: {number: 80}}}}
+      - {path: /text, pathType: Prefix, backend: {service: {name: mcp-text, port: {number: 80}}}}
+```
+
+→ **사용자 URL은 변하지 않는다** — 통합↔분리 전환이 클라이언트에 무중단·불가시.
+HPA를 붙일 때도 stateless라 제약 없음. B안(포트 분리)을 k8s에서 쓰려면 Service에
+포트를 N개 나열해야 하고 Ingress 대신 port 기반 노출(LoadBalancer/NodePort)이 필요해
+관리가 급격히 복잡해진다 — k8s 환경이라면 사실상 A/C안이 정답.
