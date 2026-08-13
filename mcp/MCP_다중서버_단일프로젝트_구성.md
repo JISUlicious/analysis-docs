@@ -171,43 +171,68 @@ MCP_SERVERS=calc       [path] :8765/calc/mcp → ['add']   (text 미기동)
    - Claude Code: `claude mcp add --transport http calc https://host/calc/mcp`
 5. 헬스체크는 루트 앱에 별도 route(`/healthz`)로 — MCP 엔드포인트와 분리.
 
-## 7. 인증 미들웨어 — 서버(mount)별 Bearer 토큰 (✅ 검증됨)
+## 7. 인증 — 추상화 계층 + 교체 가능한 인증기 (✅ 검증됨)
 
-mount 단위로 순수 ASGI 래퍼를 끼우면 서버별 독립 토큰이 된다. 검증 결과:
-
-```
-① 무토큰            → HTTP 401
-② calc에 text 토큰  → HTTP 401   (서버별 토큰 격리)
-③ 정상 토큰(calc)   → 도구 ['add'], add(1,2)=3   (정상 MCP 세션)
-④ /healthz 무인증   → HTTP 200   (프로브 경로는 인증 밖)
-```
+인증은 **방식(Authenticator)** 과 **적용 지점(AuthMiddleware)** 을 분리한다.
+미들웨어는 하나뿐이고, 인증 방식은 인터페이스 구현으로 무한 확장:
 
 ```python
-class BearerAuth:                       # 순수 ASGI 래퍼 — 프레임워크 무관
-    def __init__(self, app, token: str):
-        self.app, self.expected = app, f"Bearer {token}"
-    async def __call__(self, scope, receive, send):
-        if scope["type"] == "http":
-            hdrs = dict(scope.get("headers") or [])
-            if hdrs.get(b"authorization", b"").decode() != self.expected:
-                resp = JSONResponse({"error": "unauthorized"}, status_code=401)
-                return await resp(scope, receive, send)
-        return await self.app(scope, receive, send)
+@dataclass
+class AuthResult:
+    ok: bool
+    principal: str | None = None      # 인증된 주체 — scope로 하류 전파
+    claims: dict = field(default_factory=dict)
+    error: str = "unauthorized"
+    challenge: str | None = None      # WWW-Authenticate 값
 
-# 배포 레이어에서: 토큰은 환경변수(MCP_AUTH_TOKENS="calc=...,text=...") ← k8s Secret
-Mount(f"/{n}", app=BearerAuth(srv.streamable_http_app(), TOKENS[n]))
+class Authenticator(Protocol):        # ← 유일한 확장 지점
+    async def authenticate(self, headers: dict[str, str]) -> AuthResult: ...
+
+class AuthMiddleware:                 # 적용 지점은 하나 (순수 ASGI)
+    def __init__(self, app, authenticator: Authenticator): ...
+    # 실패 → 401 + WWW-Authenticate / 성공 → scope["state"]["principal"] 저장 후 통과
 ```
 
-- B안(포트 분리)에서도 동일 — `uvicorn.Config(BearerAuth(app, tok), port=...)`.
-- `/healthz`는 mount 밖 루트 route라 자연히 인증 제외 (k8s 프로브용).
-- **클라이언트 쪽 등록**:
-  - ADK: `StreamableHTTPConnectionParams(url=..., headers={"Authorization": "Bearer <tok>"})`
-  - Claude Code: `claude mcp add --transport http calc <url> --header "Authorization: Bearer <tok>"`
-- 스펙 정합 참고: 정적 Bearer는 사내/내부용 실용 해법이다. 외부 공개 서비스라면 스펙의
-  **OAuth 2.1 리소스 서버** 모델(FastMCP `auth`/`token_verifier` 파라미터)로 올리는 것이
-  정식 경로 — 미들웨어 자리는 동일하므로 교체 비용은 국소적.
-- 토큰별로 노출 도구를 달리하고 싶으면: 스펙상 목록의 "연결별" 가변은 금지지만
-  **자격증명별 가변은 허용** — 다만 그 수준이 필요해지면 서버를 더 쪼개는 편이 단순하다.
+**제공 구현체** (전부 PoC로 동작 검증):
+
+| 구현체 | 용도 |
+|---|---|
+| `StaticBearer(token)` | 고정 토큰 — 사내/내부 기본값 |
+| `ApiKey({key: principal}, header="x-api-key")` | API 키 발급형 |
+| `Jwt(secret/jwks, issuer, audience)` | JWT 검증 (서명·iss·aud·exp) — pyjwt는 mcp 의존성에 이미 포함 |
+| `Chain(a, b, ...)` | any-of 다중 방식 허용 — 실패 시 error/challenge 취합 |
+| `AllowAll()` | 로컬 개발용 |
+
+**배선** — 서버 레지스트리와 대칭으로, 서버별 인증기를 배포 레이어에서 조립:
+
+```python
+AUTH_PLAN = {                          # 실전에선 env/Secret 기반 팩토리로 조립
+    "calc": Chain(StaticBearer(tok), ApiKey(keys)),   # 두 방식 모두 허용
+    "text": Jwt(secret, issuer, audience),            # JWT 전용
+}
+Mount(f"/{n}", app=AuthMiddleware(srv.streamable_http_app(), AUTH_PLAN[n]))
+```
+
+**검증 결과** (PoC: [`multi_mcp_auth_poc.py`](multi_mcp_auth_poc.py)):
+
+```
+① calc 무자격        → 401, WWW-Authenticate=Bearer
+② text에 calc 토큰   → 401 (jwt: DecodeError)        ← 서버별 방식·자격 격리
+③ text 만료 JWT      → 401 (jwt: ExpiredSignatureError)
+④ calc Bearer        → 도구 ['add']
+⑤ calc ApiKey(체인)  → 도구 ['add']                   ← Chain any-of 동작
+⑥ text 정상 JWT      → 도구 ['upper']
+⑦ principal 전파     → {'principal': 'bearer-user'}   ← scope로 하류 전달 확인
+```
+
+**설계 노트**:
+- `AuthResult.principal/claims`가 scope로 전파되므로, 도구 구현에서 호출 주체 기반
+  로직(감사 로그, 권한별 동작)을 붙일 수 있는 접점이 이미 있다.
+- OAuth 2.1(스펙 정식 경로)로 올릴 때도 이 구조 유지 — introspection(RFC 7662)이나
+  SDK의 `TokenVerifier`를 감싸는 `Authenticator` 구현체 하나를 추가하면 끝.
+- B안(포트 분리)에서도 동일: `uvicorn.Config(AuthMiddleware(app, auth), port=...)`.
+- 클라이언트 등록: ADK `StreamableHTTPConnectionParams(url=..., headers={...})`,
+  Claude Code `--header`. (Bearer든 X-API-Key든 헤더 이름만 다름)
 
 ## 8. 인프라(k8s) 담당자 전달 사항 — 앱이 요구하는 계약만 성문화
 
