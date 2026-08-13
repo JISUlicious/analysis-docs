@@ -3,8 +3,10 @@
 > **조사 대상·방법**:
 > ① **공식 레퍼런스 서버 모노레포** `modelcontextprotocol/servers`(생태계 최다 스타 저장소,
 > 7개 서버: filesystem/everything/memory/sequentialthinking=TS SDK, fetch/git/time=Python SDK)
-> 소스 직접 열람. ② Python SDK(FastMCP 1.29)의 반환값 변환 규칙 소스 확인.
-> ③ FastMCP 서버를 인메모리 세션으로 띄워 **반환 타입별 실제 wire 응답 캡처**.
+> 소스 직접 열람. ② **인기 서드파티 4종** 소스 열람 — `github/github-mcp-server`(Go, GitHub 공식),
+> `upstash/context7`(TS), `sooperset/mcp-atlassian`(Python FastMCP), `firecrawl/firecrawl-mcp-server`(TS).
+> ③ Python SDK(FastMCP 1.29)의 반환값 변환 규칙 소스 확인.
+> ④ FastMCP 서버를 인메모리 세션으로 띄워 **반환 타입별 실제 wire 응답 캡처**.
 > (microsoft/playwright-mcp는 클론 결과 소스가 본체 저장소로 이관되어 배포 번들만 남아 제외)
 > 연관: [프리미티브 상세](MCP_프리미티브_상세.md) §1(CallToolResult 구조)
 
@@ -53,6 +55,19 @@ return {
 | **embedded 참조** | `get-resource-reference`: `{type:"resource", resource}` + "URI로 접근 가능" 안내 text |
 | **미디어 파일 읽기** | filesystem `read_media_file`: 이미지는 `{type:"image"}`, 그 외 바이너리는 `{type:"resource"}` 분기 |
 
+## 1-4. 인기 서드파티 서버 4종의 실제 선택 (소스 확인)
+
+| 서버 | SDK | 응답 패턴 |
+|---|---|---|
+| **github-mcp-server** (GitHub 공식, Go) | 공식 Go SDK v1.7 | **1세대 주력** — `json.Marshal(구조체)` → text 블록(159곳). 특징 둘: ① **오류-as-결과가 압도적**(`NewToolResultError` 822곳 + `ErrorFromErr` 183곳 — isError 패턴의 대규모 실사용) ② **`MinimalCommit` 등 트림 전용 구조체**로 응답을 축소해 토큰 절약. structuredContent는 단 1곳, resource/resource_link 합계 4곳(희소) |
+| **context7** (Upstash, TS) | 공식 TS SDK | **text 전용** — 문서 검색 결과를 통짜 텍스트로. 특이점: 인증 유도에 **elicitation** 사용(`maybeElicitAuthSignIn`) |
+| **mcp-atlassian** (Python) | FastMCP (`mcp>=1.27,<2.0`) | `return json.dumps(response_data, indent=2)` — **str 반환으로 JSON-문자열** (FastMCP 규칙상 `{result: string}` 래핑으로 전달됨). FastMCP 위에서도 1세대 스타일을 쓰는 실사용례 |
+| **firecrawl-mcp-server** (TS) | 공식 TS SDK | **2세대 채택** — `content:[text]` + `structuredContent: payload` 이중 표현 |
+
+→ 서드파티까지 보면: **1세대(JSON→text)가 여전히 다수파**이고(GitHub 공식조차), 2세대 이행은
+서버별로 진행 중(firecrawl, 공식 filesystem/memory). 그리고 GitHub 서버의 두 관행 —
+**대량의 오류-as-결과**와 **트림 구조체** — 는 규모 있는 프로덕션 서버의 실전 요령이다.
+
 ## 2. Python SDK(FastMCP)의 자동 변환 규칙 — 서버 코드에서 output "정의"의 실체
 
 FastMCP 기반 서버는 outputSchema를 손으로 안 씁니다 — **함수 반환 타입 어노테이션이 곧 정의**입니다
@@ -90,9 +105,9 @@ FastMCP 기반 서버는 outputSchema를 손으로 안 씁니다 — **함수 �
 
 ## 4. 종합 — 실전에서 관찰되는 규칙
 
-1. **텍스트가 여전히 왕**: 가장 인기 있는 서버들(fetch/git/memory 등)의 주력 응답은
-   text 블록이며, 구조화 데이터도 "JSON을 문자열로 넣은 text"가 광범위. 모델(LLM)의 1차
-   소비 경로가 텍스트이기 때문.
+1. **텍스트가 여전히 왕**: 공식(fetch/git/memory)·서드파티(github-mcp-server, context7,
+   mcp-atlassian) 공히 주력 응답은 text 블록이며, 구조화 데이터도 "JSON을 문자열로 넣은
+   text"가 광범위. 모델(LLM)의 1차 소비 경로가 텍스트이기 때문.
 2. **구조화 출력은 이중 표현이 표준**: structuredContent를 쓰는 곳은 예외 없이 같은 내용을
    text로도 병행 (하위호환 SHOULD 준수). 공식 서버들이 2세대 패턴으로 이행 중.
 3. **파일은 두 가지 길**: 작으면 embedded(base64 blob 인라인), 크면 resource_link(참조)
