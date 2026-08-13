@@ -4,7 +4,8 @@
 > 사용자는 **필요한 URL만** 자기 에이전트에 등록해 사용.
 > **검증**: 두 방식 모두 mcp SDK 1.29(FastMCP, `stateless_http=True`) + uvicorn으로
 > 실제 구동·클라이언트 접속·도구 격리·호출까지 확인. PoC: [`multi_mcp_poc.py`](multi_mcp_poc.py)(A안),
-> [`multi_mcp_ports_poc.py`](multi_mcp_ports_poc.py)(B안).
+> [`multi_mcp_ports_poc.py`](multi_mcp_ports_poc.py)(B안),
+> [`multi_mcp_layered_poc.py`](multi_mcp_layered_poc.py)(§6 레이어 분리 + 환경변수 제어 — **최종 권장 형태**).
 
 ---
 
@@ -98,7 +99,64 @@ routes = [Mount(f"/{n}", app=REGISTRY[n].streamable_http_app()) for n in enabled
 기술적으로 가능하나 요구사항("필요한 것만 등록") 미충족 — 사용자가 전체 도구 목록을 받고
 걸러내야 하며, 불필요한 도구가 LLM 프롬프트를 오염시킨다.
 
-## 5. 공통 설계 권고
+## 6. 최종 권장 아키텍처 — 정의/배포 레이어 분리 + 환경변수 제어 (✅ 검증됨)
+
+서버 인스턴스를 **만드는 레이어**와 **배포하는 레이어**를 분리하면, A/B안 선택과 서브셋
+선택(C안)이 전부 배포 시점의 환경변수 문제가 된다. 코드 수정 없이 배포 형태를 바꾼다.
+
+### 6-1. 레이어 1: 서버 정의 (배포 지식 전무)
+
+```python
+# servers/calc.py — 전송·포트·경로를 전혀 모름
+def build_calc() -> FastMCP:
+    srv = FastMCP("calc-server", stateless_http=True)
+    @srv.tool()
+    def add(a: int, b: int) -> int: ...
+    return srv
+
+# registry.py
+REGISTRY = {"calc": build_calc, "text": build_text}   # 이름 → 팩토리(lazy)
+```
+
+- **팩토리(lazy) 패턴** 권장: import 시점이 아니라 배포 시점에 인스턴스 생성 —
+  서브셋 배포에서 안 쓰는 서버의 초기화 비용/부작용 회피.
+
+### 6-2. 레이어 2: 배포 (환경변수가 유일한 제어면)
+
+| 환경변수 | 값 | 의미 |
+|---|---|---|
+| `MCP_SERVE_MODE` | `path`(기본) / `port` | **A안/B안 선택** |
+| `MCP_SERVERS` | `calc,text` (기본: 전체) | 마운트할 서버 서브셋 (C안 겸용) |
+| `MCP_HOST` | 기본 `127.0.0.1` | bind host |
+| `MCP_HTTP_PORT` | path 모드 전용, 기본 8765 | 단일 포트 |
+| `MCP_PORT_MAP` | port 모드: `calc=8766,text=8767` | 명시 포트 매핑 |
+| `MCP_PORT_BASE` | port 모드, 매핑 없을 때 기본 8766~ | 순차 자동 할당 |
+
+배포 레이어는 config를 읽어 (mode에 따라) A안 조립(루트 Starlette + Mount +
+AsyncExitStack lifespan) 또는 B안 조립(포트별 `uvicorn.Server` 태스크)을 수행한다.
+전체 구현은 `multi_mcp_layered_poc.py` (약 60줄).
+
+### 6-3. 검증 결과 — 코드 동일, 환경변수만 변경
+
+```
+(기본)                 [path] :8765/calc/mcp → ['add']   :8765/text/mcp → ['upper']
+MCP_SERVE_MODE=port    [port] :8766/mcp → ['add']        :8767/mcp → ['upper']
+MCP_SERVERS=calc       [path] :8765/calc/mcp → ['add']   (text 미기동)
+```
+
+### 6-4. 배포 시나리오 매핑
+
+| 시나리오 | 환경변수 |
+|---|---|
+| 통합 서비스 (일반) | (기본값) — 단일 포트 path 분리 |
+| 사내망 직결·프록시 없음 | `MCP_SERVE_MODE=port MCP_PORT_MAP=...` |
+| 특정 서버 독립 스케일 (k8s Deployment 분리) | Deployment마다 `MCP_SERVERS=<서브셋>` — 동일 이미지 |
+| 로컬 개발 (한 서버만) | `MCP_SERVERS=calc` |
+
+이 구조의 요점: **서버를 추가할 때 건드리는 곳은 정의 레이어(모듈 1개 + REGISTRY 1줄)뿐**이고,
+어디에 어떤 형태로 노출할지는 전적으로 배포 환경의 결정으로 남는다.
+
+## 7. 공통 설계 권고
 
 1. **`stateless_http=True`**: 세션 어피니티 불필요 → 복제본 수평 확장. 2026-07-28 스펙
    방향과 정합(SDK 2.0에선 유일 모드 — `streamable_http_app()` 패턴은 2.0 `MCPServer`에도
