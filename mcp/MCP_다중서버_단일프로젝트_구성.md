@@ -209,75 +209,22 @@ Mount(f"/{n}", app=BearerAuth(srv.streamable_http_app(), TOKENS[n]))
 - 토큰별로 노출 도구를 달리하고 싶으면: 스펙상 목록의 "연결별" 가변은 금지지만
   **자격증명별 가변은 허용** — 다만 그 수준이 필요해지면 서버를 더 쪼개는 편이 단순하다.
 
-## 8. k8s 매니페스트 (구체)
+## 8. 인프라(k8s) 담당자 전달 사항 — 앱이 요구하는 계약만 성문화
 
-"매니페스트"는 곧 아래 4종 리소스다. **A안 통합 배포** 기준 전체:
+배포 방법은 담당자 재량. 단, **이 앱의 동작 특성상 반드시 지켜져야 하는 사항**:
 
-```yaml
-apiVersion: v1
-kind: Secret
-metadata: {name: mcp-auth}
-stringData:
-  tokens: "calc=tok-calc,text=tok-text"        # MCP_AUTH_TOKENS 형식 그대로
----
-apiVersion: apps/v1
-kind: Deployment
-metadata: {name: mcp-hub}
-spec:
-  replicas: 2                                   # stateless라 자유롭게 증설 (어피니티 불필요)
-  selector: {matchLabels: {app: mcp-hub}}
-  template:
-    metadata: {labels: {app: mcp-hub}}
-    spec:
-      containers:
-      - name: mcp-hub
-        image: registry.example.com/mcp-hub:1.0.0
-        env:
-        - {name: MCP_HOST, value: "0.0.0.0"}    # ★ 컨테이너 필수 (기본 127.0.0.1이면 외부 접속 불가)
-        - {name: MCP_HTTP_PORT, value: "8765"}
-        # MCP_SERVE_MODE=path, MCP_SERVERS=전체 → 기본값이라 생략
-        - name: MCP_AUTH_TOKENS
-          valueFrom: {secretKeyRef: {name: mcp-auth, key: tokens}}
-        ports: [{containerPort: 8765}]
-        readinessProbe: {httpGet: {path: /healthz, port: 8765}}
-        livenessProbe:  {httpGet: {path: /healthz, port: 8765}, periodSeconds: 30}
-        resources:
-          requests: {cpu: 100m, memory: 256Mi}
-          limits: {memory: 512Mi}
----
-apiVersion: v1
-kind: Service
-metadata: {name: mcp-hub}
-spec:
-  selector: {app: mcp-hub}
-  ports: [{port: 80, targetPort: 8765}]
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata: {name: mcp-hub}
-spec:
-  rules:
-  - host: mcp.example.com
-    http:
-      paths:                                    # path 분리가 ingress에 그대로 대응
-      - {path: /calc, pathType: Prefix, backend: {service: {name: mcp-hub, port: {number: 80}}}}
-      - {path: /text, pathType: Prefix, backend: {service: {name: mcp-hub, port: {number: 80}}}}
-```
-
-사용자 등록 URL: `https://mcp.example.com/calc/mcp`, `https://mcp.example.com/text/mcp`.
-
-**C안(배포 분리)으로 전환 시 바뀌는 부분만**:
-
-```yaml
-# Deployment를 서버별로 복제 (동일 이미지) — env만 다름
-#   mcp-calc:  env MCP_SERVERS=calc   + Service mcp-calc
-#   mcp-text:  env MCP_SERVERS=text   + Service mcp-text
-# Ingress의 백엔드만 각 Service로 교체:
-      - {path: /calc, pathType: Prefix, backend: {service: {name: mcp-calc, port: {number: 80}}}}
-      - {path: /text, pathType: Prefix, backend: {service: {name: mcp-text, port: {number: 80}}}}
-```
-
-→ **사용자 URL은 변하지 않는다** — 통합↔분리 전환이 클라이언트에 무중단·불가시.
-HPA를 붙일 때도 stateless라 제약 없음. B안(포트 분리)을 k8s에서 쓰려면 Service에
-포트를 N개 나열해야 하고 Ingress 대신 port 기반 노출(LoadBalancer/NodePort)이 필요해
-관리가 급격히 복잡해진다 — k8s 환경이라면 사실상 A/C안이 정답.
+1. **바인딩**: 컨테이너에서는 `MCP_HOST=0.0.0.0` 필수 (기본값 127.0.0.1 — 미설정 시 외부 접속 불가).
+   리슨 포트는 `MCP_HTTP_PORT`(기본 8765) 하나.
+2. **경로 라우팅**: 엔드포인트는 `/{서버명}/mcp` 형태의 path Prefix.
+   **경로 rewrite 금지** — `/calc/mcp`를 `/mcp`로 벗겨서 전달하면 mount가 매칭되지 않아 404.
+   경로를 그대로 보존해 전달해야 한다.
+3. **스트리밍 응답**: MCP Streamable HTTP는 POST 응답이 **SSE 스트림**일 수 있다.
+   프록시/LB에서 응답 버퍼링 비활성화, idle timeout을 도구 최장 실행 시간 이상으로.
+4. **무상태**: 세션 어피니티(sticky session) 불필요·설정 금지. 복제수/HPA 자유.
+5. **헬스체크**: `GET /healthz` — 무인증. (그 외 모든 경로는 Bearer 인증으로 401)
+6. **시크릿**: `MCP_AUTH_TOKENS` env로 `이름=토큰,이름=토큰` 형식 주입 (Secret 권장).
+7. **배포 형태 제어는 전부 env** (§5-2 표): 기본값 = path 모드·전체 서버.
+   서버별 배포 분리 시 `MCP_SERVERS=<서브셋>`으로 동일 이미지 재사용 —
+   이때 **사용자에게 노출되는 URL은 변하지 않아야 한다** (path 라우팅만 백엔드 교체).
+8. **종료**: SIGTERM 시 uvicorn graceful shutdown — 진행 중 스트림 고려해
+   종료 유예(terminationGracePeriod)를 짧게 잡지 말 것.
