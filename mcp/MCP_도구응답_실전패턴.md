@@ -130,3 +130,53 @@ ADK(1.26.0)의 `McpTool`은 이 응답 **봉투를 통째로 `model_dump`** 해�
   됨 — 토큰 낭비 소지. 필요시 `after_tool_callback`에서 한쪽을 제거하는 최적화 여지.
 - resource_link를 받은 경우 후속 read는 ADK가 자동으로 하지 않음 — 앱 코드
   (`toolset.read_resource`) 몫.
+
+## 6. 파일 전달 방식 심층 — 표준 선택지 vs 실전 사용 (소스 실측)
+
+### 6-1. 표준(스펙/SDK)이 제공하는 선택지
+
+| # | 메커니즘 | 형태 | 성격 |
+|---|---|---|---|
+| 1 | `EmbeddedResource` | `{type:"resource", resource:{uri, mimeType, text\|blob(base64)}}` | **인라인** — 내용이 응답에 실림 |
+| 2 | `ResourceLink` | `{type:"resource_link", uri, name, size...}` | **참조** — 클라이언트가 `resources/read`로 후속 조회 (`https://` 스킴이면 웹에서 직접 fetch — 2026-07-28 명시) |
+| 3 | `ImageContent`/`AudioContent` | `{type:"image", data(base64), mimeType}` | 미디어 전용 인라인 |
+| 4 | Resources 프리미티브 | `resources/read` → Text/BlobResourceContents | 도구 응답 밖의 정식 파일 창구 |
+| 5 | (비표준) URL/base64를 text·JSON에 | 평문 필드 | 스펙 밖이지만 실전에서 흔함 |
+
+### 6-2. 서버별 실제 선택 (소스 확인)
+
+| 서버 | 파일 전달 방식 |
+|---|---|
+| **github-mcp-server** | **표준 풀스택 — 모범 사례.** `repo://{owner}/{repo}/contents{/path*}` URI 템플릿으로 Resources 프리미티브 노출 + `get_file_contents`는 크기 분기: **0B→빈 embedded / <1MB 텍스트→embedded(text) / <1MB 바이너리→embedded(base64 blob) / ≥1MB→`ResourceLink`**(자기 리소스 URI+size) — 그리고 안내 텍스트에 `download_url`도 병기(클라가 link 후속조회를 못 할 경우 대비) |
+| **filesystem** (공식) | `read_media_file`: 이미지→`ImageContent`, 그 외 바이너리→`EmbeddedResource(blob)` 분기. 텍스트 파일은 text |
+| **everything** (공식) | `gzip-file-as-resource`: embedded(blob) ↔ resourceLink **선택을 도구 인자로 노출** |
+| **mcp-atlassian** | `download_attachments`: **≤50MB만 인라인**(초과분은 실패 처리+"Jira에서 직접 받으라" 안내). 이미지→`EmbeddedResource(blob)`, **비이미지→`TextContent`에 base64 페이로드** — 의도적 표준 이탈: "많은 MCP 클라이언트가 이미지 MIME이 아닌 embedded blob을 drop한다"(이슈 #1419)는 **클라이언트 호환성 우회** |
+| **firecrawl** | 스크린샷 등을 MCP 미디어/리소스 블록 없이 **payload JSON 내 URL 필드**로 (Firecrawl API가 호스팅한 URL 전달) |
+| context7 / fetch / git | 파일 전달 개념 없음 — 전부 text |
+
+### 6-3. 관찰되는 실전 규칙
+
+1. **크기 임계값 분기가 표준 관행**: 인라인(embedded/blob) ↔ 참조(link)의 경계를 서버가
+   정한다 — github 1MB, atlassian 50MB(초과는 아예 거부). base64는 원본 대비 +33%라는
+   점까지 계산에 넣어야 한다.
+2. **이미지는 특별 대우**: 이미지면 `ImageContent`(또는 image MIME embedded)로 —
+   클라이언트 UI가 렌더링해주는 유일한 경로이기 때문. 같은 바이너리라도 이미지/비이미지의
+   전달 타입을 나누는 서버가 둘(filesystem, atlassian).
+3. **클라이언트 지원 격차가 설계를 왜곡한다** (실전 최대 함정): 비이미지 embedded blob을
+   drop하는 클라이언트들 때문에 atlassian은 base64를 TextContent에 싣는 우회를 택했다.
+   표준만 믿지 말고 대상 클라이언트의 콘텐츠 블록 처리를 확인할 것.
+4. **ResourceLink는 벨트+멜빵으로**: 후속 `resources/read`를 클라이언트가 자동으로 해주지
+   않는 경우가 많아(ADK 포함), github은 link 블록과 함께 안내 텍스트에 download URL을
+   병기한다.
+5. **비표준 URL-in-JSON도 여전히 현역**: 외부 저장소(호스팅 URL)가 있으면 그 URL을
+   payload 필드로 주는 게 가장 단순하고(firecrawl), 2026-07-28부터는 `https://` 스킴
+   ResourceLink로 표준화할 수 있는 길이 생겼다(클라 직접 fetch 허용 명시).
+
+### 6-4. 설계 가이드 (요약)
+
+- 텍스트 파일 → embedded(text) 또는 그냥 text 블록
+- 이미지 → `ImageContent` (렌더링 경로)
+- 소형 바이너리 → embedded(blob), **크기 상한 명시**
+- 대형 파일 → `ResourceLink`(+size) + 안내 텍스트에 대체 URL 병기, 서버에 Resources
+  프리미티브(read)도 함께 노출 — github 패턴 그대로가 정답에 가깝다
+- 대상 클라이언트가 비이미지 blob을 소화하는지 사전 확인 — 못 하면 atlassian식 우회 고려
