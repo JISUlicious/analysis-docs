@@ -3,7 +3,8 @@
 > **전제**: [다중 서버 단일 프로젝트](MCP_다중서버_단일프로젝트_구성.md)의 레이어 구조 위에서,
 > 분리된 서버마다 데이터 담당자가 DB 조회 도구를 만들되 커넥션 관리는 중앙화하려는 방향.
 > **검증**: 제안 패턴(DBHub)을 SQLAlchemy async + FastMCP로 구현해 5개 항목 실측
-> (PoC: [`db_hub_poc.py`](db_hub_poc.py)).
+> (PoC: [`db_hub_poc.py`](db_hub_poc.py)) + 엔진 캐시 여부 벤치마크
+> (PoC: [`db_util_bench.py`](db_util_bench.py)).
 
 ---
 
@@ -112,7 +113,76 @@ async def lifespan(app):
     await hub.shutdown()                             # 종료 시 정리
 ```
 
-## 3. 성문화 — 도구 작성자(담당자) 계약
+
+## 3. "util 함수로 매번 정리" vs 중앙 pool — 실측 근거
+
+**질문**: 적절한 util 함수를 만들어 매번 conn을 깔끔히 정리 + timeout 관리하는 게
+가장 간단·효율적 아닌가?
+
+**답: 둘은 대안이 아니다.** util 함수도 엔진이 어딘가 있어야 하고, **그 엔진이 어디 사는지가
+곧 "중앙 pool 관리냐"를 결정**한다. 잘 만든 util = 이미 중앙 pool 관리다.
+
+### 3-1. "매번 정리"를 두 층으로 갈라야 한다
+
+| 층위 | 매번 정리? | 이유 |
+|---|---|---|
+| **커넥션** (`engine.connect()`) | ✅ **매번 대여·반납이 정답** | 컨텍스트 매니저가 예외 경로까지 반납 보장 |
+| **엔진/풀** (`create_async_engine`) | ❌ **매번 만들면 안 됨** | 풀을 버리는 것 = 커넥션 재사용 포기 |
+
+**실측** (로컬 SQLite, 30회 조회 — PoC: [`db_util_bench.py`](db_util_bench.py)):
+
+```
+A) 매 호출 엔진 생성 → dispose : 40.0 ms
+B) 엔진 캐시 + 커넥션만 대여   : 14.8 ms   → B가 2.7배 빠름
+예외 발생 후 반납 확인         : checked_out=0 (컨텍스트 매니저가 정리)
+```
+
+이 수치는 **A에게 가장 유리한 조건**이다 — SQLite는 로컬 파일이라 네트워크가 없다.
+실제 원격 Postgres라면 엔진 폐기 시 TCP+TLS 핸드셰이크+인증을 매번 반복하므로 격차가
+더 벌어진다(측정 아닌 추론). 게다가 A는 DB의 `max_connections`를 호출 빈도만큼 두드린다.
+
+### 3-2. 그래서 최소 형태가 이미 중앙화다
+
+```python
+# db.py — "적절한 util 함수"의 최소 형태
+_engine = None                                    # ← 모듈 레벨 캐시 = 중앙 pool
+
+def _get_engine():
+    global _engine
+    if _engine is None:
+        _engine = create_async_engine(DSN, pool_pre_ping=True, pool_size=5)
+    return _engine
+
+@asynccontextmanager
+async def db_conn():                              # 매 호출 대여·반납
+    async with _get_engine().connect() as conn:
+        yield conn
+```
+
+**DBHub는 여기에 정책(타깃 allowlist·row limit·타깃별 자격증명)이 붙은 것**뿐이다.
+선택 기준은 성능이 아니라 **정책이 필요한가**:
+
+| 상황 | 권장 |
+|---|---|
+| DB 1개, 담당자 전원 같은 권한 | **util 함수로 충분** (모듈 엔진 + `db_conn()`) — DBHub는 과설계 |
+| **도메인별 DB · 담당자별 서버 분리** (본 요구사항) | **DBHub** — allowlist가 보안 핵심이라 생략 불가 |
+
+정책 없는 util은 "누구나 아무 DB에나" 붙을 수 있어 §1-2의 최대 리스크(한 도구 버그 →
+타 도메인 유출)가 그대로 남는다. §2의 `TARGET_FORBIDDEN` 검증이 그 차이다.
+
+### 3-3. Timeout은 3계층
+
+| 계층 | 수단 | 막는 것 |
+|---|---|---|
+| ① 풀 대기 | `create_async_engine(..., pool_timeout=N)` | 풀 고갈 시 무한 대기 |
+| ② **문 실행** | **DB 벤더 기능** (PG `statement_timeout`, MSSQL `LOCK_TIMEOUT` 등) | 서버에서 계속 도는 쿼리 — **권위 계층** |
+| ③ 전체 | `asyncio.timeout(N)`으로 도구 호출 감싸기 | 클라이언트 측 상한 |
+
+실측: ③ 발동 시에도 `checked_out=0` — 커넥션은 정상 반납된다. 다만 ③만 걸면 파이썬 쪽만
+포기하고 **DB 서버에서는 쿼리가 계속 도는** 경우가 있어(드라이버별 취소 지원 차이) ②가
+반드시 필요하다. `hub.fetch_all`에 ②③을 기본 내장하면 담당자가 잊을 수 없다.
+
+## 4. 성문화 — 도구 작성자(담당자) 계약
 
 1. **엔진/커넥션 직접 생성 금지** — 모든 DB 접근은 `hub` 경유.
 2. 대여는 **도구 호출 스코프 안**에서만. 전역/모듈 변수에 conn/tx 저장 금지.
@@ -123,7 +193,7 @@ async def lifespan(app):
    [도구응답 실전패턴 §6](MCP_도구응답_실전패턴.md)의 링크 전달 패턴으로.
 6. 새 타깃/자격증명은 코드가 아니라 **설정 등록**으로 요청.
 
-## 4. 인프라 전달 사항 (추가분)
+## 5. 인프라 전달 사항 (추가분)
 
 - **커넥션 예산**: Σ(배포별 replicas × (pool_size+max_overflow)) ≤ DB max_connections − 운영 여유분.
   배포 분리(C안)·HPA 증설 시 이 식으로 pool 상한 재조정 필요.
