@@ -53,6 +53,46 @@
 | `isError` | **도구 실행 실패 플래그** — 중요: JSON-RPC 프로토콜 오류와 구분된다. 실행 실패(`isError: true`)는 **정상 응답에 실려 모델에게 보여지는 오류**로, 모델이 읽고 재시도/우회를 판단한다. (ADK/skill 사례에서 봤듯 "오류가 예외가 아니라 정상 응답"인 것이 재시도 루프의 토양이 되기도 한다) |
 | `resultType` | `"complete"` / `"input_required"` (MRTR 중간 결과, 2026-07-28~) |
 
+### 1-2-1. 응답 스키마의 자유도 — 고정 3겹 + 자유 1겹
+
+"MCP 응답은 그냥 JSON 키-값이면 되는가?"에 대한 답: **아니다. 고정 봉투 3겹 안의
+payload만 자유롭다.** (SDK 1.29/2.0 실측)
+
+```
+① JSON-RPC 봉투     {"jsonrpc":"2.0", "id":1, "result":{...}}        ← 완전 고정
+② CallToolResult    {"content":[...], "structuredContent":..., "isError":..., "resultType":...}
+                     ↑ content 필수, 나머지 선택 — 키 이름 고정
+③ 콘텐츠 블록        {"type":"text"|"image"|"audio"|"resource_link"|"resource", ...}
+                     ↑ type은 열거값만, 타입별 필수 필드 강제
+④ structuredContent  { ← 여기부터 자유 JSON }
+```
+
+**실측 검증**:
+
+| 시도 | 결과 |
+|---|---|
+| `content` 누락 | ❌ ValidationError(`missing`) — **필수 필드** |
+| `text` 블록에서 `text` 누락 | ❌ 거부 — 타입별 필수 필드 강제 |
+| 커스텀 `type: "my_custom_type"` | ❌ 거부 (13개 후보 타입 전부 실패) — **type은 열거값만** |
+| `structuredContent`에 중첩 자유 dict | ✅ 허용 |
+| 최상위에 임의 키(`myKey`) | ⚠️ SDK 1.29는 `extra="allow"`라 통과, **2.0은 미설정(strict)** |
+
+**설계 자유도는 실질적으로 두 곳뿐**:
+
+1. **`structuredContent` 내부 스키마** — 완전 자유. 단 `outputSchema`를 선언하면 그 계약을
+   지켜야 하고 SDK 클라이언트가 자동 검증한다. 타입 제약도 완화됨:
+   **1.29 `dict[str, Any]` → 2.0 `Any`** (2026-07-28이 임의 JSON 값 허용).
+2. **`content` 블록 배열 구성** — 어떤 타입을 몇 개, 어떤 순서로 (텍스트만 / 텍스트+이미지 /
+   resource_link 여러 개 …).
+
+**주의**: 최상위 커스텀 키는 넣지 말 것 — 1.29에서 통과해도 클라이언트가 읽지 않고,
+2.0에서는 거부될 수 있다. 부가 정보는 스펙이 정한 확장 자리인 **`_meta`** 또는
+`structuredContent` 안에 넣는다.
+
+> FastMCP를 쓰면 이 봉투를 직접 만들지 않는다 — 도구가 `dict`를 반환하면 SDK가
+> `content[text=JSON]`(+스키마 있으면 `structuredContent`)로 감싼다. 도구 작성자에겐
+> "아무 JSON이나 반환"처럼 보이지만 **wire에는 항상 고정 봉투가 씌워진다**(§2 변환 규칙).
+
 ### 1-3. ToolAnnotations — 신뢰할 수 없는 "힌트"
 
 | 힌트 | 의미 |
