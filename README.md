@@ -8,6 +8,7 @@ google-adk/
 ├── agent-tool/          AgentTool — 에이전트를 도구로 감쌌을 때의 동작
 └── web-server/          AdkWebServer — 세션 라이프사이클·메모리, 잔존 실행 관측
 mcp/                     MCP(Model Context Protocol) — 개념·구조·다이어그램
+freebuff/                Freebuff — 무료 AI 코딩 에이전트의 경제 구조 분석
 ```
 
 ---
@@ -114,3 +115,38 @@ google-adk 1.26.0 `tools/mcp_tool/` 소스로 검증.
 - **2026-07-28부터 코어 stateless**: 세션·initialize 핸드셰이크 제거, 요청이 `_meta`로 자기기술, `server/discover`로 발견, 서버발 상호작용은 **MRTR**(input_required→재시도)·**subscriptions/listen**으로 재편.
 - 서버 프리미티브 **Tools/Resources/Prompts** 유지(+ttlMs/cacheScope 캐시 필드), 클라이언트측은 **Elicitation(MRTR)만 실질 존속** — Sampling/Roots/Logging deprecated(12개월+ 유예).
 - ADK는 호스트 구현체(`McpToolset→MCPSessionManager→McpTool`)이나 **`mcp<2.0` 핀 = 구모델 클라이언트** — stateless 전용 서버와의 호환 유의.
+
+---
+
+# Freebuff — 무료 제공 구조
+
+📁 [`freebuff/`](freebuff/)
+
+[`CodebuffAI/freebuff`](https://github.com/CodebuffAI/freebuff)가 **어떻게 무료로 제공되는지**를
+공개 스냅샷 코드 기준으로 복원한 분석. 분석 기준 커밋 **`90e6615`** (2026-08-26).
+
+| 문서 | 내용 |
+|---|---|
+| [무료 제공 구조 분석](freebuff/Freebuff_무료제공_구조_분석.md) | 원가 억제 · 배급 · 수익화 · 방어 4축 + Trust/Level 획득 루프. 실측 원가표, 프로바이더 캐스케이드 단가, 세션·신뢰레벨 매트릭스, 광고 지면·참여 마켓플레이스 가격, 재판매 방어 계층, 단위 경제 추정 |
+| [무료 구조도 (draw.io)](freebuff/Freebuff_무료구조.drawio) | 수입↔원가↔배급↔방어 자금 흐름 한 장 + 획득 루프 + 사용자가 실제로 지불하는 것 |
+
+### 핵심 요약
+
+- README는 "텍스트 광고가 모델을 지원한다"고만 말하지만, **광고 단독으로는 이 구조가 지탱되지 않는다.**
+  성립 조건은 `원가 억제 × 배급 + 수익화 + 방어`.
+- **원가 억제가 가장 무거운 축**: 18개 프로바이더 레인의 최저가 캐스케이드(세션 단위 고정 —
+  토큰의 ~96.5%가 cache read라 레인을 옮기면 콜드 프리필 재지불), DeepSeek 피크 2배 요금 창
+  전체 차단(세션이 1시간이라 1시간 리드타임), 서브에이전트를 없앤 base3 단일 루프 하네스,
+  양자화 빌드. 실측 세션(1h) 원가 — Luna $0.758 / V4 Pro $0.605 / **V4 Flash $0.156**.
+- **배급 4층이 곱해진다**: 1시간 세션(모델 바인딩) × 지역 티어(IP 국가) × 계정 신뢰 레벨 ×
+  지출 실링(최솟값이 이김). 약한 신호는 **밴이 아니라 캡** — 659계정 오탐 밴을 수작업 복구한
+  기록이 근거로 남아 있다.
+- **Trust/Level 루프가 네 축을 묶는다**: 참여 1건 = 광고주에게 $0.50 청구 = 사용자에게 Trust 50
+  = 프롬프트 50개. 프롬프트마다 Trust −1이라 **레벨 유지에 지속 참여가 필요**하고, 그 결과
+  무료 용량 확대의 재원을 그 용량을 요구하는 행위 자체가 조달한다.
+- **`gravity_index` 툴 = 에이전트에 내장된 제휴 전환 채널**. 시스템 프롬프트가 "서비스를 기억만으로
+  추천하지 말라"고 지시하고, 추적 setup URL을 강제 보존하며, **env var 저장이 "활성화"로 과금**된다
+  (클릭 후 30일 귀속).
+- **최대 위협은 헤비 유저가 아니라 재판매**. 시스템 프롬프트 0바이트 프리픽스 검사, 툴 시그니처
+  (프롬프트와 달리 위조하면 진짜 클라이언트가 되어 버림), 차단 대신 **원가 0 모델로 다운그레이드**,
+  Cloudflare가 엣지에서 찍어 제거 불가능한 `CF-Worker` 헤더.
