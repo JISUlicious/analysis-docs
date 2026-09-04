@@ -65,8 +65,14 @@ Task Progress:
 [참조는 이 파일에서 1단계까지만. 참조 파일이 다시 참조를 걸면
  Claude가 부분 읽기로 미리보기해서 정보가 잘린다.]
 
+[아래 형태로 쓴다. 실제 번들 파일로 교체할 것 —
+ 링크가 가리키는 파일이 없으면 Claude가 읽으러 갔다가 빈손으로 돌아온다.]
+
+```markdown
 - 상세 API: [reference.md](reference.md)
 - 사용 예: [examples.md](examples.md)
+```
+
 - 실행 스크립트: `scripts/helper.py` — **실행한다** (`python scripts/helper.py <input>`)
 
 <!--
