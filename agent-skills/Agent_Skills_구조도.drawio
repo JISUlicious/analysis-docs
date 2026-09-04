@@ -1,0 +1,124 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.0.0">
+  <diagram id="agent-skills-standard" name="Agent Skills 구조·표준">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1150" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="Agent Skills — 3단계 로딩 · 규격 · 배포 경로" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=17;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="10" width="900" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="공식 문서 4종 + Anthropic 배포 스킬 40개 실측 (2026-09-04). 작성 규칙의 대부분은 왼쪽 로딩 구조에서 파생된다." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=12;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="20" y="38" width="1000" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- ============ 3단계 로딩 ============ -->
+        <mxCell id="load_box" value="① 점진적 공개 (Progressive disclosure) — 모든 규칙의 근거" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;fontStyle=1;fontSize=13;align=left;spacingLeft=10;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="30" y="80" width="620" height="330" as="geometry" />
+        </mxCell>
+
+        <mxCell id="l1" value="L1 · 메타데이터 —  항상 로드 (세션 시작 시 시스템 프롬프트)&#10;name + description  ·  스킬당 ~100 토큰&#10;→ description은 &apos;항상 켜져 있는 비용&apos;. 그래서 1024자 상한이 있고,&#10;   그래서 이 필드가 트리거의 전부다." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="45" y="112" width="590" height="64" as="geometry" />
+        </mxCell>
+
+        <mxCell id="l2" value="L2 · 본문 —  스킬이 트리거될 때 로드 (목표 5k 토큰 미만)&#10;SKILL.md 마크다운&#10;→ 한 번 로드되면 대화 끝까지 남는다(재읽기 없음). 그래서 500줄 제한.&#10;   실측 40개 중 초과 0건 — 최장 485줄, 중앙값 80줄." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="45" y="186" width="590" height="64" as="geometry" />
+        </mxCell>
+
+        <mxCell id="l3" value="L3 · 번들 리소스 —  실제로 읽거나 실행할 때만 (읽기 전 비용 0)&#10;references/ 읽는다(토큰 씀)  ·  scripts/ 실행한다(코드는 컨텍스트에 안 들어감)  ·  assets/ 복사·삽입한다&#10;→ 큰 참조 문서를 SKILL.md에 넣는 건 순손실, 파일로 빼는 건 순이익.&#10;   스크립트는 출력만 토큰을 쓴다 = 생성 코드보다 싸고 안정적이다." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="45" y="260" width="590" height="72" as="geometry" />
+        </mxCell>
+
+        <mxCell id="l_note" value="&quot;The context window is a public good.&quot; — 스킬은 시스템 프롬프트, 대화 기록, 다른 스킬의 메타데이터, 사용자의 실제 요청과 같은 창을 나눠 쓴다." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fontColor=#444444;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="45" y="340" width="590" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="ea" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#6c8ebf;endArrow=block;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="l1" target="l2">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="38" y="144" /><mxPoint x="38" y="218" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="eb" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#6c8ebf;endArrow=block;exitX=0;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="l2" target="l3">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="38" y="218" /><mxPoint x="38" y="296" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- ============ 규격 ============ -->
+        <mxCell id="spec_box" value="② 세 규격이 겹쳐 있다 — 이식성 등급을 먼저 정하라" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;fontStyle=1;fontSize=13;align=left;spacingLeft=10;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="690" y="80" width="870" height="330" as="geometry" />
+        </mxCell>
+
+        <mxCell id="spec_outer" value="Agent Skills 개방 표준 —  이 6개가 전부&#10;name · description · license · compatibility · metadata · allowed-tools" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=11;verticalAlign=top;spacingTop=6;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="705" y="112" width="500" height="48" as="geometry" />
+        </mxCell>
+
+        <mxCell id="spec_cc" value="Claude Code 확장 —  로컬·플러그인에서만 동작&#10;when_to_use · argument-hint · arguments · model · effort · context · agent&#10;background · hooks · paths · shell · disable-model-invocation&#10;user-invocable · disallowed-tools" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="705" y="168" width="500" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="spec_err" value="스펙 밖 필드가 하나라도 있으면 업로드/패키징은 무시가 아니라 &quot;하드 에러&quot;&#10;&#10;  Unexpected key(s) in SKILL.md frontmatter: argument-hint.&#10;  Allowed properties are: allowed-tools, compatibility, description,&#10;                          license, metadata, name" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;fontFamily=monospace;" vertex="1" parent="1">
+          <mxGeometry x="705" y="246" width="500" height="86" as="geometry" />
+        </mxCell>
+
+        <mxCell id="grade" value="이식성 등급&#10;&#10;P0 — 이식형&#10;  스펙 6필드만 + 순수 마크다운&#10;  Claude Code · claude.ai · API&#10;  Cowork · 클라우드 세션 전부&#10;  ← 기본값으로 삼는다&#10;&#10;P1 — Claude Code 전용&#10;  확장 필드 · !`cmd` 주입&#10;  $ARGUMENTS · ${CLAUDE_*}&#10;  ← 없으면 스킬이 성립하지&#10;     않을 때만" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="1225" y="112" width="320" height="220" as="geometry" />
+        </mxCell>
+
+        <mxCell id="grade_warn" value="P1 기능은 조용히 깨진다: claude.ai에서 동기화된 스킬은 로컬 세션에서 `!` 명령이 실행되지 않고 리터럴 텍스트로 전달된다." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;fontSize=10;fontColor=#444444;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="1225" y="338" width="320" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ============ 검증 규격 ============ -->
+        <mxCell id="val_box" value="③ 하드 제약 — 위반하면 로드/업로드가 실패한다 (validate_skill.py가 이걸 구현한다)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;verticalAlign=top;fontStyle=1;fontSize=13;align=left;spacingLeft=10;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="30" y="440" width="760" height="270" as="geometry" />
+        </mxCell>
+
+        <mxCell id="val_body" value="파일          첫 줄이 `---`이어야 프론트매터로 인식 — 아니면 `---` 포함 파일 전체가 본문이 된다&#10;              SKILL.md는 스킬 하나에 정확히 1개, 루트에 (중첩은 업로드에서 거부)&#10;프론트매터    유효한 YAML 매핑&#10;&#10;name          ^[a-z0-9-]+$  ·  최대 64자&#10;              하이픈 시작/끝 금지, 연속 하이픈(--) 금지&#10;              XML 태그 금지  ·  예약어 &apos;anthropic&apos;, &apos;claude&apos; 금지&#10;&#10;description   비어 있으면 안 됨  ·  최대 1,024자&#10;              꺾쇠(&lt; &gt;) 금지 ← 파싱 문제가 아니라 내부 포맷 위장(인젝션) 방어&#10;&#10;compatibility 문자열, 최대 500자&#10;업로드 전체    30MB 미만 (압축 해제 기준)&#10;패키징 제외    __pycache__/ · node_modules/ · *.pyc · .DS_Store (모든 깊이)&#10;              evals/ (스킬 루트에서만)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;fontFamily=monospace;" vertex="1" parent="1">
+          <mxGeometry x="45" y="472" width="730" height="222" as="geometry" />
+        </mxCell>
+
+        <!-- ============ 이름 ============ -->
+        <mxCell id="name_box" value="④ 명령어 이름은 name이 아니라 &apos;위치&apos;에서 온다" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;verticalAlign=top;fontStyle=1;fontSize=13;align=left;spacingLeft=10;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="820" y="440" width="740" height="270" as="geometry" />
+        </mxCell>
+
+        <mxCell id="name_body" value="~/.claude/skills/&lt;dir&gt;/SKILL.md        → 디렉터리 이름 (name은 표시 라벨일 뿐)&#10;.claude/skills/&lt;dir&gt;/SKILL.md          → 디렉터리 이름&#10;중첩 .claude/skills/ (이름 충돌 시)      → 상대경로:디렉터리명  예) /apps/web:deploy&#10;.claude/commands/&lt;file&gt;.md             → 확장자 뺀 파일명&#10;플러그인 skills/&lt;dir&gt;/SKILL.md          → name 또는 디렉터리명 + 플러그인 접두사&#10;플러그인 루트 SKILL.md                   → name (없으면 플러그인 디렉터리명)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;fontFamily=monospace;" vertex="1" parent="1">
+          <mxGeometry x="835" y="472" width="710" height="94" as="geometry" />
+        </mxCell>
+
+        <mxCell id="name_evidence" value="이 환경에 설치된 실제 사례 — 규칙의 산 증거&#10;&#10;  경로            ~/.claude/skills/session-start-hook/SKILL.md&#10;  프론트매터       name: startup-hook-skill&#10;  목록에 뜨는 이름  session-start-hook          ← 디렉터리가 이긴다&#10;&#10;→ 그래서 디렉터리 이름과 name을 항상 일치시킨다. 실측 40개 전부 일치.&#10;   불일치는 두 개의 이름이 돌아다니게 만들 뿐 아무것도 사지 못한다." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="835" y="574" width="710" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- ============ description ============ -->
+        <mxCell id="desc_box" value="⑤ description — 스킬의 성패. 트리거의 유일한 근거다" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontStyle=1;fontSize=13;align=left;spacingLeft=10;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="30" y="740" width="760" height="250" as="geometry" />
+        </mxCell>
+
+        <mxCell id="desc_formula" value="description = [무엇을 하는가]  +  [언제 쓰는가 — 구체적 트리거]  +  [언제 쓰지 않는가]&#10;&#10;세 번째가 실측에서 가장 두드러지는데 공식 문서에는 강조되어 있지 않다.&#10;600자 넘는 10개는 거의 전부 &quot;Do NOT / However&quot; 절을 갖는다. 그 절이 없으면 오발한다." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="45" y="772" width="730" height="70" as="geometry" />
+        </mxCell>
+
+        <mxCell id="desc_rules" value="3인칭으로 쓴다 — 시스템 프롬프트에 주입되므로 시점이 섞이면 발견이 망가진다&#10;  ○ &quot;Processes Excel files and generates reports&quot;   × &quot;I can help you…&quot;  × &quot;You can use this to…&quot;&#10;핵심 유스케이스를 앞에 — description + when_to_use는 스킬 목록에서 1,536자에 잘린다&#10;구체 용어를 넣는다 — 확장자(.xlsx), 도구명, 캐주얼한 지칭(&quot;the xlsx in my downloads&quot;)까지&#10;약간 밀어붙인다 — Claude는 스킬을 &apos;언더트리거&apos;하는 경향이 있다&#10;&#10;실측 길이:  최소 139  ·  중앙값 308  ·  평균 430  ·  최대 1,003 (상한의 98%)&#10;→ 길이는 &apos;배제 규칙을 쓰느라&apos; 늘어야지 &apos;무엇을 하는지 설명하느라&apos; 늘면 안 된다." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="45" y="850" width="730" height="124" as="geometry" />
+        </mxCell>
+
+        <!-- ============ 수명주기 ============ -->
+        <mxCell id="life_box" value="⑥ Claude Code 수명주기 — 본문은 남고, 권한은 사라진다" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontStyle=1;fontSize=13;align=left;spacingLeft=10;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="820" y="740" width="740" height="250" as="geometry" />
+        </mxCell>
+
+        <mxCell id="life_body" value="호출 → 렌더링된 SKILL.md가 &apos;하나의 메시지&apos;로 들어가 이후 턴까지 유지&#10;      Claude Code는 이후 턴에 파일을 다시 읽지 않는다&#10;      → 작업 내내 적용될 지침은 &apos;1회성 단계&apos;가 아니라 &apos;상시 지침&apos;으로 쓴다&#10;&#10;권한   allowed-tools 승인은 다음 사용자 메시지에서 해제된다 (본문은 남는데 권한은 사라짐)&#10;&#10;재호출 렌더링 결과가 같으면 복사본 대신 &quot;이미 로드됨&quot; 메모만 붙는다&#10;      인자나 주입 출력이 바뀌면 전체가 다시 붙는다&#10;&#10;압축   스킬당 앞 5,000토큰만, 전체 25,000토큰 예산 안에서 재부착&#10;      최근 호출 순으로 채우므로 오래된 스킬은 통째로 사라질 수 있다 → 재호출한다&#10;&#10;&quot;스킬이 안 먹는다&quot;의 실제 원인: 대개 내용은 남아 있고 모델이 다른 접근을 고르는 중이다&#10;      → description·지침을 강화하거나, 훅으로 결정적으로 강제한다" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="835" y="772" width="710" height="202" as="geometry" />
+        </mxCell>
+
+        <!-- ============ 배포 ============ -->
+        <mxCell id="dist_box" value="⑦ 배포 — 서피스 간 동기화는 없다" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;fontStyle=1;fontSize=13;align=left;spacingLeft=10;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1020" width="1530" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="dist_body" value="설치 위치 우선순위    enterprise  &gt;  personal(~/.claude)  &gt;  project(.claude)  &gt;  bundled  &gt;  claude.ai 동기화        (플러그인은 plugin:skill 네임스페이스라 충돌 없음)&#10;주의                프로젝트 code-review 스킬은 번들 /code-review를 대체하지만 번들 별칭 /review는 절대 내 스킬로 가지 않는다&#10;원격의 함정          Cowork · 클라우드 세션은 로컬 ~/.claude/skills/를 읽지 않는다 → 저장소 .claude/skills/에 커밋하거나, 플러그인으로 선언하거나, claude.ai 계정에 올린다&#10;공유 단위            claude.ai = 개인 전용(관리자 중앙관리 불가)  ·  Claude API = 워크스페이스 전체  ·  Claude Code = 개인/프로젝트/플러그인&#10;보안                allowed-tools는 워크스페이스 신뢰를 통과하지 않는다 — 신뢰한 적 없는 폴더의 -p 실행에서도 적용된다. 체크인된 스킬의 allowed-tools를 실행 전에 읽어라." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;align=left;spacingLeft=8;fontSize=10;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="45" y="1050" width="1500" height="60" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
