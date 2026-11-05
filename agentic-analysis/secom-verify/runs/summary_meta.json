@@ -1,0 +1,104 @@
+[
+  {
+    "run": "A1",
+    "labels": "labels_real.csv",
+    "skill": false,
+    "exit": 0,
+    "elapsed_sec": 257,
+    "workspace_files": [
+      "report.md",
+      "result.json"
+    ]
+  },
+  {
+    "run": "A'1",
+    "labels": "labels_permuted.csv",
+    "skill": false,
+    "exit": 0,
+    "elapsed_sec": 211,
+    "workspace_files": [
+      "report.md",
+      "result.json"
+    ]
+  },
+  {
+    "run": "B'1",
+    "labels": "labels_permuted.csv",
+    "skill": true,
+    "exit": 0,
+    "elapsed_sec": 53,
+    "workspace_files": [
+      "report.md",
+      "result.json",
+      "screen.json"
+    ]
+  },
+  {
+    "run": "A2",
+    "labels": "labels_real.csv",
+    "skill": false,
+    "exit": 0,
+    "elapsed_sec": 237,
+    "workspace_files": [
+      "report.md",
+      "result.json"
+    ]
+  },
+  {
+    "run": "A'2",
+    "labels": "labels_permuted.csv",
+    "skill": false,
+    "exit": 0,
+    "elapsed_sec": 256,
+    "workspace_files": [
+      "report.md",
+      "result.json"
+    ]
+  },
+  {
+    "run": "B'2",
+    "labels": "labels_permuted.csv",
+    "skill": true,
+    "exit": 0,
+    "elapsed_sec": 61,
+    "workspace_files": [
+      "report.md",
+      "result.json",
+      "screen.json"
+    ]
+  },
+  {
+    "run": "A3",
+    "labels": "labels_real.csv",
+    "skill": false,
+    "exit": 0,
+    "elapsed_sec": 187,
+    "workspace_files": [
+      "report.md",
+      "result.json"
+    ]
+  },
+  {
+    "run": "A'3",
+    "labels": "labels_permuted.csv",
+    "skill": false,
+    "exit": 0,
+    "elapsed_sec": 259,
+    "workspace_files": [
+      "report.md",
+      "result.json"
+    ]
+  },
+  {
+    "run": "B'3",
+    "labels": "labels_permuted.csv",
+    "skill": true,
+    "exit": 0,
+    "elapsed_sec": 45,
+    "workspace_files": [
+      "report.md",
+      "result.json",
+      "screen.json"
+    ]
+  }
+]

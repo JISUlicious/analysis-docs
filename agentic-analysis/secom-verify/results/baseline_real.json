@@ -1,0 +1,366 @@
+{
+  "verdict": "CANDIDATES",
+  "profile": {
+    "rows": 1567,
+    "sensors": 590,
+    "fails": 104,
+    "fail_rate": 0.0664,
+    "constant_sensors": 116,
+    "near_constant_sensors_excluded": 6,
+    "sensors_over_50pct_nan": 28,
+    "testable_sensors": 468
+  },
+  "univariate": {
+    "test": "Mann-Whitney U, two-sided, asymptotic with continuity",
+    "raw_p_lt_0.05": 89,
+    "bh_fdr_significant": 21,
+    "bonferroni_significant": 9
+  },
+  "noise_floor": {
+    "permutations": 1000,
+    "seed": 0,
+    "raw_p_lt_0.05_mean": 23.5,
+    "raw_p_lt_0.05_p95": 39.0,
+    "raw_p_lt_0.05_max": 71,
+    "bh_significant_mean": 0.115,
+    "bh_significant_max": 11,
+    "permutations_with_any_bh_hit": 34,
+    "observed_raw_count_empirical_p": 0.001,
+    "fwer_minP_threshold": 0.00022964703168204144,
+    "sensors_below_minP_threshold": 13
+  },
+  "time_structure": {
+    "bins": 10,
+    "fails_per_bin": [
+      20,
+      24,
+      14,
+      7,
+      2,
+      9,
+      2,
+      9,
+      14,
+      3
+    ],
+    "chi2_p_fail_rate_homogeneous": 3.325413208619573e-08,
+    "bh_significant_time_adjusted": 6,
+    "bh_significant_lost_after_time_adjustment": 16
+  },
+  "validated_candidates": [
+    {
+      "sensor": "sensor_183",
+      "p_raw": 5.6786377604731255e-11,
+      "p_time_adjusted": 0.00015181396938525853,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": true,
+      "auc_fail_higher": 0.692,
+      "spearman_with_time": -0.442,
+      "nan_ratio": 0.004
+    },
+    {
+      "sensor": "sensor_290",
+      "p_raw": 3.500083776759887e-05,
+      "p_time_adjusted": 0.00011004970035377961,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": true,
+      "auc_fail_higher": 0.621,
+      "spearman_with_time": -0.219,
+      "nan_ratio": 0.004
+    },
+    {
+      "sensor": "sensor_124",
+      "p_raw": 4.7171894020925405e-05,
+      "p_time_adjusted": 0.0001306882007632936,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": true,
+      "auc_fail_higher": 0.619,
+      "spearman_with_time": -0.211,
+      "nan_ratio": 0.004
+    },
+    {
+      "sensor": "sensor_012",
+      "p_raw": 0.00018691545877558448,
+      "p_time_adjusted": 0.00044796804880897604,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": true,
+      "auc_fail_higher": 0.61,
+      "spearman_with_time": -0.201,
+      "nan_ratio": 0.004
+    },
+    {
+      "sensor": "sensor_140",
+      "p_raw": 0.00044614124732243596,
+      "p_time_adjusted": 0.0003753605467343756,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": true,
+      "auc_fail_higher": 0.603,
+      "spearman_with_time": 0.201,
+      "nan_ratio": 0.001
+    }
+  ],
+  "lost_to_time_adjustment": [
+    {
+      "sensor": "sensor_590",
+      "p_raw": 9.5504298782319e-09,
+      "p_time_adjusted": 0.023746100542276462,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.668,
+      "spearman_with_time": -0.524,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_257",
+      "p_raw": 1.0716525125366944e-06,
+      "p_time_adjusted": 0.08634071986016145,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.675,
+      "spearman_with_time": -0.492,
+      "nan_ratio": 0.456
+    },
+    {
+      "sensor": "sensor_110",
+      "p_raw": 1.192898583379745e-06,
+      "p_time_adjusted": 0.0849653153544774,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.674,
+      "spearman_with_time": -0.488,
+      "nan_ratio": 0.456
+    },
+    {
+      "sensor": "sensor_239",
+      "p_raw": 3.4526122377580496e-06,
+      "p_time_adjusted": 0.021913655061726087,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.636,
+      "spearman_with_time": -0.415,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_301",
+      "p_raw": 4.831540255418541e-05,
+      "p_time_adjusted": 0.13223109955070855,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.619,
+      "spearman_with_time": -0.31,
+      "nan_ratio": 0.006
+    },
+    {
+      "sensor": "sensor_470",
+      "p_raw": 6.955945523698205e-05,
+      "p_time_adjusted": 0.2069829325071615,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.383,
+      "spearman_with_time": 0.587,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_292",
+      "p_raw": 0.0001613608349533639,
+      "p_time_adjusted": 0.02573356623758192,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.611,
+      "spearman_with_time": -0.148,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_103",
+      "p_raw": 0.00019070700765836066,
+      "p_time_adjusted": 0.0510407643173574,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.391,
+      "spearman_with_time": 0.353,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_345",
+      "p_raw": 0.0001917653692282783,
+      "p_time_adjusted": 0.11136788271713348,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.634,
+      "spearman_with_time": -0.335,
+      "nan_ratio": 0.456
+    },
+    {
+      "sensor": "sensor_327",
+      "p_raw": 0.0004928452773214519,
+      "p_time_adjusted": 0.04191224830012863,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.602,
+      "spearman_with_time": -0.326,
+      "nan_ratio": 0.006
+    },
+    {
+      "sensor": "sensor_310",
+      "p_raw": 0.0011566377144488413,
+      "p_time_adjusted": 0.4592918505493967,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.596,
+      "spearman_with_time": -0.351,
+      "nan_ratio": 0.006
+    },
+    {
+      "sensor": "sensor_127",
+      "p_raw": 0.0013841426283918079,
+      "p_time_adjusted": 0.006319003952873571,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.326,
+      "spearman_with_time": 0.296,
+      "nan_ratio": 0.65
+    },
+    {
+      "sensor": "sensor_487",
+      "p_raw": 0.0015210314248363312,
+      "p_time_adjusted": 0.13478624223731359,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.407,
+      "spearman_with_time": 0.343,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_198",
+      "p_raw": 0.001538907458109187,
+      "p_time_adjusted": 0.029847853079994734,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.407,
+      "spearman_with_time": 0.235,
+      "nan_ratio": 0.006
+    },
+    {
+      "sensor": "sensor_008",
+      "p_raw": 0.001602322652465056,
+      "p_time_adjusted": 0.03254941082060682,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.593,
+      "spearman_with_time": -0.178,
+      "nan_ratio": 0.015
+    },
+    {
+      "sensor": "sensor_323",
+      "p_raw": 0.0019027763649620514,
+      "p_time_adjusted": 0.024405963274952973,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.409,
+      "spearman_with_time": 0.518,
+      "nan_ratio": 0.015
+    }
+  ],
+  "top10_by_raw_p": [
+    {
+      "sensor": "sensor_183",
+      "p_raw": 5.6786377604731255e-11,
+      "p_time_adjusted": 0.00015181396938525853,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": true,
+      "auc_fail_higher": 0.692,
+      "spearman_with_time": -0.442,
+      "nan_ratio": 0.004
+    },
+    {
+      "sensor": "sensor_590",
+      "p_raw": 9.5504298782319e-09,
+      "p_time_adjusted": 0.023746100542276462,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.668,
+      "spearman_with_time": -0.524,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_257",
+      "p_raw": 1.0716525125366944e-06,
+      "p_time_adjusted": 0.08634071986016145,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.675,
+      "spearman_with_time": -0.492,
+      "nan_ratio": 0.456
+    },
+    {
+      "sensor": "sensor_110",
+      "p_raw": 1.192898583379745e-06,
+      "p_time_adjusted": 0.0849653153544774,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.674,
+      "spearman_with_time": -0.488,
+      "nan_ratio": 0.456
+    },
+    {
+      "sensor": "sensor_239",
+      "p_raw": 3.4526122377580496e-06,
+      "p_time_adjusted": 0.021913655061726087,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.636,
+      "spearman_with_time": -0.415,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_290",
+      "p_raw": 3.500083776759887e-05,
+      "p_time_adjusted": 0.00011004970035377961,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": true,
+      "auc_fail_higher": 0.621,
+      "spearman_with_time": -0.219,
+      "nan_ratio": 0.004
+    },
+    {
+      "sensor": "sensor_124",
+      "p_raw": 4.7171894020925405e-05,
+      "p_time_adjusted": 0.0001306882007632936,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": true,
+      "auc_fail_higher": 0.619,
+      "spearman_with_time": -0.211,
+      "nan_ratio": 0.004
+    },
+    {
+      "sensor": "sensor_301",
+      "p_raw": 4.831540255418541e-05,
+      "p_time_adjusted": 0.13223109955070855,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.619,
+      "spearman_with_time": -0.31,
+      "nan_ratio": 0.006
+    },
+    {
+      "sensor": "sensor_470",
+      "p_raw": 6.955945523698205e-05,
+      "p_time_adjusted": 0.2069829325071615,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.383,
+      "spearman_with_time": 0.587,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_292",
+      "p_raw": 0.0001613608349533639,
+      "p_time_adjusted": 0.02573356623758192,
+      "bh_significant": true,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.611,
+      "spearman_with_time": -0.148,
+      "nan_ratio": 0.001
+    }
+  ]
+}

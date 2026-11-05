@@ -1,0 +1,4 @@
+Reading additional input from stdin...
+2026-09-17T07:23:12.969037Z ERROR codex_models_manager::manager: failed to renew cache TTL: missing field `supports_parallel_tool_calls` at line 132 column 5
+2026-09-17T07:23:48.701005Z ERROR codex_models_manager::manager: failed to renew cache TTL: missing field `supports_parallel_tool_calls` at line 132 column 5
+2026-09-17T07:23:53.704580Z ERROR codex_models_manager::manager: failed to renew cache TTL: missing field `supports_parallel_tool_calls` at line 132 column 5

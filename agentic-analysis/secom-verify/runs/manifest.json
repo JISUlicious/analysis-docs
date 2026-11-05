@@ -1,0 +1,16 @@
+{
+  "frozen_at_utc": "2026-09-17T07:14:23+00:00",
+  "codex_version": "codex-cli 0.147.0",
+  "model": "gpt-5.6-terra",
+  "reasoning_effort": "high",
+  "sha256": {
+    "prompts/task.md": "ed7d42f2465f14a4b7db73855019781051de2622737d69b0dc560ddaef664f43",
+    "prompts/rubric.md": "f808ec0f9de9aefeafb4dc48e6e643ea8550d5a2143baa1d287676e98aadd57d",
+    "skill/sensor-defect-screening/SKILL.md": "aa1234d3788b350185242e29c91dc37e185d9269716b24c2193cdf8174db4932",
+    "skill/sensor-defect-screening/scripts/screen.py": "4f497637b4fbc798128ccc883e38a18304e6bb562c8a263362ab295d17ca40c9",
+    "skill/sensor-defect-screening/scripts/check_claims.py": "15178daf16fa80603c7a1a5a0083ce870aec4e17722dd4007fb8cdfa29846c9b",
+    "data/sensors.csv": "77a4cddfb08710631f63d07398fb2e0fc92446ecc79fc4b769dc5fb19cc2b228",
+    "data/labels_real.csv": "ae1acadaab92372e64c803b51ec13d879a55706a5777dd80dac412ea63c4f009",
+    "data/labels_permuted.csv": "a3cf444dd057368ce1c6ec70a088c6f97a4902e3f9bfe1d006d9577a6a7343b3"
+  }
+}

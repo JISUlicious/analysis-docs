@@ -1,0 +1,45 @@
+{
+  "cause_sensors": [
+    {
+      "sensor": "sensor_183",
+      "confidence": "high",
+      "evidence": "불량 중앙값 5.522가 양품 0.722보다 높고 AUC 0.692·FDR q=2.69e-08이며 시간 보정과 300회 재표본화에서도 유지됐다."
+    },
+    {
+      "sensor": "sensor_590",
+      "confidence": "high",
+      "evidence": "AUC 0.668, FDR q=2.26e-06이고 시간 보정 시 1표준편차당 불량 오즈비가 1.448(p=0.000945)이다."
+    },
+    {
+      "sensor": "sensor_140",
+      "confidence": "high",
+      "evidence": "시간 보정 OR 1.304(p=0.000666)와 99.7%의 부트스트랩 선택률로 시간·다른 후보 보정 뒤에도 가장 안정적이다."
+    },
+    {
+      "sensor": "sensor_327",
+      "confidence": "high",
+      "evidence": "시간 보정 OR 1.451(p=0.00188), 부트스트랩 선택률 89.3%이며 다변량 시간 보정에서도 유의했다."
+    },
+    {
+      "sensor": "sensor_301",
+      "confidence": "medium",
+      "evidence": "AUC 0.619, FDR q=0.00286, 시간 보정 OR 1.442(p=0.0194)로 독립 신호가 남지만 상위군보다 약하다."
+    },
+    {
+      "sensor": "sensor_292",
+      "confidence": "medium",
+      "evidence": "불량에서 더 높고 시간 보정 OR 1.175(p=0.0132), 부트스트랩 선택률 77.3%를 보였다."
+    },
+    {
+      "sensor": "sensor_103",
+      "confidence": "medium",
+      "evidence": "값이 낮을수록 불량과 연관되며 시간 보정 OR 0.746(p=0.0149), 부트스트랩 선택률 89.3%다."
+    },
+    {
+      "sensor": "sensor_008",
+      "confidence": "medium",
+      "evidence": "효과는 작지만 시간 보정 OR 1.266(p=0.00223)과 88.0%의 부트스트랩 선택률로 일관되게 남았다."
+    }
+  ],
+  "summary": "우선 조사할 원인 의심 센서는 sensor_183, sensor_590, sensor_140, sensor_327이며, 나머지 4개는 보조 후보입니다. 관측 자료의 연관성 분석이므로 공정 로그와 후속 로트 검증으로 물리적 인과를 확인해야 합니다."
+}

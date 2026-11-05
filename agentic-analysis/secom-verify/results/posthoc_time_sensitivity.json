@@ -1,0 +1,34 @@
+{
+  "sets": {
+    "decile10_VE": [
+      "sensor_012",
+      "sensor_124",
+      "sensor_140",
+      "sensor_183",
+      "sensor_290",
+      "sensor_538"
+    ],
+    "decile10_LR": [],
+    "month_VE": [
+      "sensor_183"
+    ],
+    "month_LR": [],
+    "week_VE": [
+      "sensor_031",
+      "sensor_124",
+      "sensor_140",
+      "sensor_183",
+      "sensor_290"
+    ],
+    "week_LR": []
+  },
+  "survival_counts": {
+    "sensor_538": 1,
+    "sensor_140": 2,
+    "sensor_183": 3,
+    "sensor_124": 2,
+    "sensor_290": 2,
+    "sensor_031": 1,
+    "sensor_012": 1
+  }
+}

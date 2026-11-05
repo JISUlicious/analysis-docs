@@ -1,0 +1,10 @@
+manifest frozen at 2026-09-17T07:14:23+00:00 (codex-cli 0.147.0, gpt-5.6-terra/high)
+[done] B'1: exit=0 53s files=['report.md', 'result.json', 'screen.json']
+[done] A'1: exit=0 211s files=['report.md', 'result.json']
+[done] A1: exit=0 257s files=['report.md', 'result.json']
+[done] A2: exit=0 237s files=['report.md', 'result.json']
+[done] B'2: exit=0 61s files=['report.md', 'result.json', 'screen.json']
+[done] A'2: exit=0 256s files=['report.md', 'result.json']
+[done] A3: exit=0 187s files=['report.md', 'result.json']
+[done] B'3: exit=0 45s files=['report.md', 'result.json', 'screen.json']
+[done] A'3: exit=0 259s files=['report.md', 'result.json']

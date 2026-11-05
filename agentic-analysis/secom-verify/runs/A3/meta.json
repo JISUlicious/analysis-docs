@@ -1,0 +1,11 @@
+{
+  "run": "A3",
+  "labels": "labels_real.csv",
+  "skill": false,
+  "exit": 0,
+  "elapsed_sec": 187,
+  "workspace_files": [
+    "report.md",
+    "result.json"
+  ]
+}

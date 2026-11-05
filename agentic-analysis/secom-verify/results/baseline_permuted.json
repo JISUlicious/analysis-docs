@@ -1,0 +1,154 @@
+{
+  "verdict": "NO_EVIDENCE",
+  "profile": {
+    "rows": 1567,
+    "sensors": 590,
+    "fails": 104,
+    "fail_rate": 0.0664,
+    "constant_sensors": 116,
+    "near_constant_sensors_excluded": 6,
+    "sensors_over_50pct_nan": 28,
+    "testable_sensors": 468
+  },
+  "univariate": {
+    "test": "Mann-Whitney U, two-sided, asymptotic with continuity",
+    "raw_p_lt_0.05": 37,
+    "bh_fdr_significant": 0,
+    "bonferroni_significant": 0
+  },
+  "noise_floor": {
+    "permutations": 1000,
+    "seed": 0,
+    "raw_p_lt_0.05_mean": 23.6,
+    "raw_p_lt_0.05_p95": 39.0,
+    "raw_p_lt_0.05_max": 63,
+    "bh_significant_mean": 0.098,
+    "bh_significant_max": 8,
+    "permutations_with_any_bh_hit": 38,
+    "observed_raw_count_empirical_p": 0.0719,
+    "fwer_minP_threshold": 0.00016332497383497087,
+    "sensors_below_minP_threshold": 0
+  },
+  "time_structure": {
+    "bins": 10,
+    "fails_per_bin": [
+      11,
+      6,
+      10,
+      12,
+      7,
+      9,
+      14,
+      14,
+      8,
+      13
+    ],
+    "chi2_p_fail_rate_homogeneous": 0.5574512001631403,
+    "bh_significant_time_adjusted": 0,
+    "bh_significant_lost_after_time_adjustment": 0
+  },
+  "validated_candidates": [],
+  "lost_to_time_adjustment": [],
+  "top10_by_raw_p": [
+    {
+      "sensor": "sensor_298",
+      "p_raw": 0.0010884554894542598,
+      "p_time_adjusted": 0.0009607812180654257,
+      "bh_significant": false,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.404,
+      "spearman_with_time": 0.042,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_200",
+      "p_raw": 0.0014955734897082024,
+      "p_time_adjusted": 0.006064001744669347,
+      "bh_significant": false,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.407,
+      "spearman_with_time": -0.304,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_122",
+      "p_raw": 0.0019185331322380454,
+      "p_time_adjusted": 0.009761781380794053,
+      "bh_significant": false,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.409,
+      "spearman_with_time": -0.304,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_369",
+      "p_raw": 0.002092846830368919,
+      "p_time_adjusted": 0.009152063118005196,
+      "bh_significant": false,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.41,
+      "spearman_with_time": -0.259,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_306",
+      "p_raw": 0.002247636708789603,
+      "p_time_adjusted": 0.0007239357903846525,
+      "bh_significant": false,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.41,
+      "spearman_with_time": 0.136,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_251",
+      "p_raw": 0.0029179671751281594,
+      "p_time_adjusted": 0.0010534899980226243,
+      "bh_significant": false,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.413,
+      "spearman_with_time": 0.026,
+      "nan_ratio": 0.004
+    },
+    {
+      "sensor": "sensor_040",
+      "p_raw": 0.006826822037529126,
+      "p_time_adjusted": 0.015467256433977727,
+      "bh_significant": false,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.62,
+      "spearman_with_time": -0.03,
+      "nan_ratio": 0.606
+    },
+    {
+      "sensor": "sensor_180",
+      "p_raw": 0.00788023672996699,
+      "p_time_adjusted": 0.00487647816093249,
+      "bh_significant": false,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.422,
+      "spearman_with_time": 0.23,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_586",
+      "p_raw": 0.009730639042860716,
+      "p_time_adjusted": 0.01928521964544116,
+      "bh_significant": false,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.576,
+      "spearman_with_time": 0.443,
+      "nan_ratio": 0.001
+    },
+    {
+      "sensor": "sensor_590",
+      "p_raw": 0.012042547419076465,
+      "p_time_adjusted": 0.02184455348870982,
+      "bh_significant": false,
+      "bh_significant_time_adjusted": false,
+      "auc_fail_higher": 0.426,
+      "spearman_with_time": -0.524,
+      "nan_ratio": 0.001
+    }
+  ]
+}

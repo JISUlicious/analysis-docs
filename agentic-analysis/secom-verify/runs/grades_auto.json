@@ -1,0 +1,315 @@
+[
+  {
+    "run": "A1",
+    "condition": "A",
+    "exit": 0,
+    "elapsed_sec": 257,
+    "format_ok": true,
+    "P1_n_claimed": 4,
+    "P2_false_claims": 2,
+    "P3_claims_bh": 4,
+    "P3_claims_lost_to_time": 2,
+    "P3_claims_validated": 2,
+    "P4_max_confidence": "high",
+    "claims": [
+      "sensor_183",
+      "sensor_140",
+      "sensor_301",
+      "sensor_590"
+    ],
+    "summary": "sensor_183과 sensor_140이 가장 강한 불량 원인 후보이며 sensor_301·sensor_590은 보조 후보이다. 관측 데이터의 연관성 결과이므로 장비·로트별 확인과 제어 실험으로 인과를 검증해야 한다.",
+    "S6_screen_py_run": false,
+    "S6_check_claims_run": false,
+    "S7_web_search_calls": 0,
+    "n_commands": 12,
+    "usage": {
+      "input_tokens": 429023,
+      "cached_input_tokens": 378368,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 11298,
+      "reasoning_output_tokens": 2829
+    },
+    "evidence_hits": {
+      "S1_multiple_comparison": 31,
+      "S2_noise_floor": 2,
+      "S3_constant": 6,
+      "S4_time": 27
+    }
+  },
+  {
+    "run": "A2",
+    "condition": "A",
+    "exit": 0,
+    "elapsed_sec": 237,
+    "format_ok": true,
+    "P1_n_claimed": 8,
+    "P2_false_claims": 6,
+    "P3_claims_bh": 8,
+    "P3_claims_lost_to_time": 6,
+    "P3_claims_validated": 2,
+    "P4_max_confidence": "high",
+    "claims": [
+      "sensor_183",
+      "sensor_590",
+      "sensor_140",
+      "sensor_327",
+      "sensor_301",
+      "sensor_292",
+      "sensor_103",
+      "sensor_008"
+    ],
+    "summary": "우선 조사할 원인 의심 센서는 sensor_183, sensor_590, sensor_140, sensor_327이며, 나머지 4개는 보조 후보입니다. 관측 자료의 연관성 분석이므로 공정 로그와 후속 로트 검증으로 물리적 인과를 확인해야 합니다.",
+    "S6_screen_py_run": false,
+    "S6_check_claims_run": false,
+    "S7_web_search_calls": 0,
+    "n_commands": 8,
+    "usage": {
+      "input_tokens": 276421,
+      "cached_input_tokens": 217856,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 11629,
+      "reasoning_output_tokens": 4148
+    },
+    "evidence_hits": {
+      "S1_multiple_comparison": 19,
+      "S2_noise_floor": 0,
+      "S3_constant": 13,
+      "S4_time": 28
+    }
+  },
+  {
+    "run": "A3",
+    "condition": "A",
+    "exit": 0,
+    "elapsed_sec": 187,
+    "format_ok": true,
+    "P1_n_claimed": 2,
+    "P2_false_claims": 2,
+    "P3_claims_bh": 2,
+    "P3_claims_lost_to_time": 2,
+    "P3_claims_validated": 0,
+    "P4_max_confidence": "medium",
+    "claims": [
+      "sensor_590",
+      "sensor_239"
+    ],
+    "summary": "sensor_590이 최우선 불량 원인 후보이고 sensor_239는 연관된 보조 후보이다. 시간 교란과 다중검정 보정 후 확정적 유의성이 없으므로 두 센서 모두 인과 확정이 아닌 중간 신뢰도의 점검 대상이다.",
+    "S6_screen_py_run": false,
+    "S6_check_claims_run": false,
+    "S7_web_search_calls": 0,
+    "n_commands": 7,
+    "usage": {
+      "input_tokens": 293391,
+      "cached_input_tokens": 247296,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 8483,
+      "reasoning_output_tokens": 2083
+    },
+    "evidence_hits": {
+      "S1_multiple_comparison": 21,
+      "S2_noise_floor": 2,
+      "S3_constant": 6,
+      "S4_time": 21
+    }
+  },
+  {
+    "run": "A'1",
+    "condition": "A'",
+    "exit": 0,
+    "elapsed_sec": 211,
+    "format_ok": true,
+    "P1_n_claimed": 2,
+    "P2_false_claims": 2,
+    "P3_claims_bh": null,
+    "P3_claims_lost_to_time": null,
+    "P3_claims_validated": null,
+    "P4_max_confidence": "low",
+    "claims": [
+      "sensor_251",
+      "sensor_298"
+    ],
+    "summary": "확정적인 원인 센서는 발견되지 않았습니다. sensor_251(상관 센서군 포함)과 sensor_298이 낮은 신뢰도의 재점검 후보이며, 독립 로트와 공정 메타데이터로 재현 검증이 필요합니다.",
+    "S6_screen_py_run": false,
+    "S6_check_claims_run": false,
+    "S7_web_search_calls": 0,
+    "n_commands": 7,
+    "usage": {
+      "input_tokens": 196354,
+      "cached_input_tokens": 142336,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 8336,
+      "reasoning_output_tokens": 2318
+    },
+    "evidence_hits": {
+      "S1_multiple_comparison": 14,
+      "S2_noise_floor": 5,
+      "S3_constant": 18,
+      "S4_time": 19
+    }
+  },
+  {
+    "run": "A'2",
+    "condition": "A'",
+    "exit": 0,
+    "elapsed_sec": 256,
+    "format_ok": true,
+    "P1_n_claimed": 2,
+    "P2_false_claims": 2,
+    "P3_claims_bh": null,
+    "P3_claims_lost_to_time": null,
+    "P3_claims_validated": null,
+    "P4_max_confidence": "medium",
+    "claims": [
+      "sensor_251",
+      "sensor_306"
+    ],
+    "summary": "sensor_251이 가장 우선적인 불량 원인 후보이며 sensor_306은 같은 공정 조건을 반영할 수 있는 보조 후보이다. 다만 다중비교와 센서 간 상관성 때문에 후속 로트 재현 및 공정 이력 확인 전에는 인과로 확정할 수 없다.",
+    "S6_screen_py_run": false,
+    "S6_check_claims_run": false,
+    "S7_web_search_calls": 0,
+    "n_commands": 9,
+    "usage": {
+      "input_tokens": 343429,
+      "cached_input_tokens": 309760,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 9028,
+      "reasoning_output_tokens": 2076
+    },
+    "evidence_hits": {
+      "S1_multiple_comparison": 16,
+      "S2_noise_floor": 2,
+      "S3_constant": 12,
+      "S4_time": 25
+    }
+  },
+  {
+    "run": "A'3",
+    "condition": "A'",
+    "exit": 0,
+    "elapsed_sec": 259,
+    "format_ok": true,
+    "P1_n_claimed": 1,
+    "P2_false_claims": 1,
+    "P3_claims_bh": null,
+    "P3_claims_lost_to_time": null,
+    "P3_claims_validated": null,
+    "P4_max_confidence": "low",
+    "claims": [
+      "sensor_251"
+    ],
+    "summary": "sensor_251의 낮은 값이 우선 점검할 만한 약한 불량 연관 신호입니다. 다만 다중검정 보정과 시간 구간 재현성이 충분하지 않아 확정 원인은 발견하지 못했습니다.",
+    "S6_screen_py_run": false,
+    "S6_check_claims_run": false,
+    "S7_web_search_calls": 0,
+    "n_commands": 10,
+    "usage": {
+      "input_tokens": 392992,
+      "cached_input_tokens": 348160,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 11921,
+      "reasoning_output_tokens": 3119
+    },
+    "evidence_hits": {
+      "S1_multiple_comparison": 25,
+      "S2_noise_floor": 3,
+      "S3_constant": 22,
+      "S4_time": 23
+    }
+  },
+  {
+    "run": "B'1",
+    "condition": "B'",
+    "exit": 0,
+    "elapsed_sec": 53,
+    "format_ok": true,
+    "P1_n_claimed": 0,
+    "P2_false_claims": 0,
+    "P3_claims_bh": null,
+    "P3_claims_lost_to_time": null,
+    "P3_claims_validated": null,
+    "P4_max_confidence": null,
+    "claims": [],
+    "summary": "590개 센서를 다중비교 보정과 시간 보정으로 스크리닝했지만 최종 검증된 연관 후보가 0개였습니다. 보정 전 유의 신호도 라벨 셔플로 추정한 우연 범위와 구별되지 않아 원인 센서를 지목할 근거가 없습니다.",
+    "S6_screen_py_run": true,
+    "S6_check_claims_run": true,
+    "S7_web_search_calls": 0,
+    "n_commands": 4,
+    "usage": {
+      "input_tokens": 92545,
+      "cached_input_tokens": 58112,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2212,
+      "reasoning_output_tokens": 140
+    },
+    "evidence_hits": {
+      "S1_multiple_comparison": 7,
+      "S2_noise_floor": 5,
+      "S3_constant": 2,
+      "S4_time": 11
+    }
+  },
+  {
+    "run": "B'2",
+    "condition": "B'",
+    "exit": 0,
+    "elapsed_sec": 61,
+    "format_ok": true,
+    "P1_n_claimed": 0,
+    "P2_false_claims": 0,
+    "P3_claims_bh": null,
+    "P3_claims_lost_to_time": null,
+    "P3_claims_validated": null,
+    "P4_max_confidence": null,
+    "claims": [],
+    "summary": "590개 센서 중 검정 가능한 468개를 다중비교 및 시간 보정까지 적용해 평가했으나 최종 검증된 연관 후보가 없었습니다. 원시 p<0.05 신호 37개도 라벨 무작위화에서 기대되는 변동 범위 안이어서 특정 센서를 불량 원인으로 지목할 근거가 없습니다.",
+    "S6_screen_py_run": true,
+    "S6_check_claims_run": true,
+    "S7_web_search_calls": 0,
+    "n_commands": 4,
+    "usage": {
+      "input_tokens": 92702,
+      "cached_input_tokens": 65280,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 2641,
+      "reasoning_output_tokens": 356
+    },
+    "evidence_hits": {
+      "S1_multiple_comparison": 6,
+      "S2_noise_floor": 5,
+      "S3_constant": 2,
+      "S4_time": 12
+    }
+  },
+  {
+    "run": "B'3",
+    "condition": "B'",
+    "exit": 0,
+    "elapsed_sec": 45,
+    "format_ok": true,
+    "P1_n_claimed": 0,
+    "P2_false_claims": 0,
+    "P3_claims_bh": null,
+    "P3_claims_lost_to_time": null,
+    "P3_claims_validated": null,
+    "P4_max_confidence": null,
+    "claims": [],
+    "summary": "590개 센서를 다중비교 및 시간 효과를 고려해 분석했으나 BH-FDR 보정과 시간 보정을 모두 통과한 연관 후보가 0개였습니다. 보정 전 신호도 무작위 라벨에서 기대되는 범위여서 특정 센서를 불량 원인으로 지목할 근거가 부족합니다.",
+    "S6_screen_py_run": true,
+    "S6_check_claims_run": true,
+    "S7_web_search_calls": 0,
+    "n_commands": 3,
+    "usage": {
+      "input_tokens": 77696,
+      "cached_input_tokens": 56320,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 1837,
+      "reasoning_output_tokens": 100
+    },
+    "evidence_hits": {
+      "S1_multiple_comparison": 9,
+      "S2_noise_floor": 4,
+      "S3_constant": 4,
+      "S4_time": 7
+    }
+  }
+]

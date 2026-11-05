@@ -1,0 +1,11 @@
+{
+  "run": "A'1",
+  "labels": "labels_permuted.csv",
+  "skill": false,
+  "exit": 0,
+  "elapsed_sec": 211,
+  "workspace_files": [
+    "report.md",
+    "result.json"
+  ]
+}

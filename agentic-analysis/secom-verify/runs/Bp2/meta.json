@@ -1,0 +1,12 @@
+{
+  "run": "B'2",
+  "labels": "labels_permuted.csv",
+  "skill": true,
+  "exit": 0,
+  "elapsed_sec": 61,
+  "workspace_files": [
+    "report.md",
+    "result.json",
+    "screen.json"
+  ]
+}
