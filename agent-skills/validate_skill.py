@@ -216,9 +216,12 @@ def check_frontmatter(fm: dict, rep: Report, portable: bool) -> None:
             if XML_TAG.search(name):
                 rep.error(f"name '{name}': XML 태그 포함")
             if name != rep.skill_dir.name:
-                rep.warn(
+                # 개방 표준: "Must match the parent directory name".
+                # Claude Code는 디렉터리 이름을 쓰고 넘어가지만, 다른 구현(VS Code 등)은
+                # 로드하지 않는다 → 이식형(P0)에서는 오류.
+                (rep.error if portable else rep.warn)(
                     f"name '{name}' != 디렉터리 '{rep.skill_dir.name}' — "
-                    "개인/프로젝트 스킬의 명령어 이름은 디렉터리에서 온다"
+                    "개방 표준은 상위 디렉터리명과 일치를 요구한다"
                 )
 
     # --- description ------------------------------------------------------
@@ -260,6 +263,15 @@ def check_frontmatter(fm: dict, rep: Report, portable: bool) -> None:
                     "metadata 키가 프론트매터 필드명과 겹침: "
                     + ", ".join(sorted(clash))
                 )
+            # 개방 표준은 metadata를 "string 키 → string 값" 맵으로 한정한다.
+            # version: 1.0 처럼 인용부호를 빼면 float이 되어 다른 구현에서 깨진다.
+            for key, value in meta.items():
+                if not isinstance(key, str) or not isinstance(value, str):
+                    (rep.error if portable else rep.warn)(
+                        f"metadata['{key}'] 값이 문자열이 아님: "
+                        f"{type(value).__name__} — 개방 표준은 string→string 맵만 허용"
+                        " (예: version: \"1.0\")"
+                    )
 
     # --- context: fork ----------------------------------------------------
     if fm.get("context") == "fork" and "agent" not in fm:

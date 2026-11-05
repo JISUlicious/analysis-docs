@@ -1,7 +1,7 @@
 # Agent Skills 작성 표준
 
 > 공식 문서 3종 + Anthropic이 실제로 배포한 스킬 40개 실측을 근거로 정리한 작성 표준.
-> 조사 기준일: **2026-09-04**
+> 조사 기준일: **2026-09-04** · 개방 표준 원문(D6) 직접 대조: **2026-11-04**
 
 ---
 
@@ -16,10 +16,17 @@
 | D3 | [Agent Skills — Overview](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview) | 3단계 로딩 구조, 필드 검증 규칙, 서피스별 제약 |
 | D4 | [Using Agent Skills with the API](https://platform.claude.com/docs/en/build-with-claude/skills-guide) | 업로드 한계(30MB), 버전 규칙 |
 | D5 | `skill-creator` 스킬 (Apache-2.0, `anthropics/skills`) | 제작 프로세스, 평가 루프, **`scripts/quick_validate.py`의 실행 가능한 검증 규칙** |
+| D6 | [Agent Skills — Specification](https://agentskills.io/specification.md) | **개방 표준 원문.** 필드 집합·길이 제약·토큰 기준·`skills-ref` 검증기 |
 
-> [agentskills.io](https://agentskills.io) 개방 표준 원문은 이 환경의 이그레스 프록시에서 차단되어 직접 확인하지 못했다.
-> 표준이 정의하는 필드 집합은 D1의 "Using skill frontmatter outside Claude Code" 표와 D5의
-> `ALLOWED_PROPERTIES`로 **간접 확인**했고, 두 출처가 정확히 일치한다.
+> **D6 원문 확인 이력.** 2026-09-04 조사 당시 [agentskills.io](https://agentskills.io)는 이그레스 프록시에서
+> 차단되어, 필드 집합을 D1의 "Using skill frontmatter outside Claude Code" 표와 D5의
+> `ALLOWED_PROPERTIES`로 간접 확인했다. **2026-11-04에 원문을 직접 받아 대조했고, 필드 6개와
+> 길이 제약(64자·1,024자·500자)·하이픈 규칙은 간접 확인 결과와 정확히 일치했다.**
+> 차이가 난 4건은 해당 절에 반영했다 — §4.2(`metadata` 값 타입, `allowed-tools` 실험 표기),
+> §4.3(`name`=디렉터리명의 등급), §6.1(토큰 기준), §13(`skills-ref` 교차 검증).
+>
+> 단 [Client Showcase](https://agentskills.io/clients.md)는 동적 렌더링이라 **지원 제품 목록은 읽지 못했다.**
+> "N개 도구가 지원한다"류의 숫자는 이 문서의 근거에 포함되지 않는다.
 
 ### 0.2 실측 표본
 
@@ -207,8 +214,8 @@ D3의 필드 요구사항과 D5의 `quick_validate.py`가 완전히 일치한다
 | `description` | **S** | **권장(사실상 필수)** | 무엇을 하고 **언제 쓰는지**. 트리거의 전부 |
 | `license` | **S** | 아니오 | 라이선스. Claude Code는 받기만 하고 동작하지 않음 |
 | `compatibility` | **S** | 아니오 | 실행 환경 요구사항. ≤500자 |
-| `metadata` | **S** | 아니오 | 자유 형식 YAML 맵. 자체 툴링용. 다른 필드명 재사용 금지 |
-| `allowed-tools` | **S** | 아니오 | 이 스킬을 호출한 **턴 동안만** 승인 없이 쓸 도구 |
+| `metadata` | **S** | 아니오 | **string 키 → string 값 맵**(D6). 자체 툴링용. 다른 필드명 재사용 금지 |
+| `allowed-tools` | **S** | 아니오 | 이 스킬을 호출한 **턴 동안만** 승인 없이 쓸 도구. **D6에서 Experimental** |
 | `when_to_use` | CC | 아니오 | 트리거 문구 보강. `description`에 이어붙고 **합산 1,536자에서 잘림** |
 | `disable-model-invocation` | CC | 아니오 | `true`면 사람만 호출. 부작용 있는 워크플로용 |
 | `user-invocable` | CC | 아니오 | `false`면 Claude만 호출. 배경지식용 |
@@ -223,6 +230,14 @@ D3의 필드 요구사항과 D5의 `quick_validate.py`가 완전히 일치한다
 | `hooks` | CC | 아니오 | 스킬 호출 시 등록되어 **세션 끝까지 유지**되는 훅 |
 | `paths` | CC | 아니오 | 글롭. 매칭 파일 작업 중일 때만 자동 로드 |
 | `shell` | CC | 아니오 | `bash`(기본) 또는 `powershell` |
+
+**S 필드의 두 가지 함정** (D6 원문 확인):
+
+- **`metadata`의 값은 문자열이어야 한다.** 숫자·불리언·리스트·중첩 객체를 넣으면 이식성이 깨진다.
+  `version: "1.0"`처럼 **인용부호를 붙인다**(`version: 1.0`은 float이 된다).
+- **`allowed-tools`는 원문이 명시적으로 실험 단계로 표시한다** — *"Experimental. Support for this
+  field may vary between agent implementations."* 표준 6필드에 속하지만 **동작을 가정하지 않는다.**
+  권한이 필요한 스킬은 이 필드가 무시되는 구현에서도 성립하도록 쓴다(§11.2도 같은 결론).
 
 ### 4.3 이름 규칙 — 가장 자주 오해하는 부분 **[규격]**
 
@@ -245,7 +260,14 @@ D3의 필드 요구사항과 D5의 `quick_validate.py`가 완전히 일치한다
 스킬 목록에 뜨는 이름: session-start-hook      ← 디렉터리가 이긴다
 ```
 
-**[표준]** 그래서 **디렉터리 이름과 `name`을 항상 일치시킨다.** 실측 40개 전부 일치한다.
+**[규격]** 그래서 **디렉터리 이름과 `name`을 항상 일치시킨다.** 실측 40개 전부 일치한다.
+
+이것은 권고가 아니라 **개방 표준의 규칙**이다. D6의 `name` 항목이 *"Must match the parent directory
+name"*으로 못 박는다. Claude Code는 불일치를 **조용히 흡수**해(디렉터리 이름이 이기고 `name`은 라벨로만
+남음) 위반이 드러나지 않지만, 다른 구현에서는 **로드 실패**로 나타난다 — VS Code/Copilot은 `name`이
+디렉터리명과 다르면 그 스킬을 **아무 메시지 없이 로드하지 않는다**([VS Code — Use Agent Skills](https://code.visualstudio.com/docs/agent-customization/agent-skills),
+2026-11-04 확인). 즉 Claude Code에서만 테스트하면 이 위반을 발견할 수 없다.
+
 불일치는 문서·대화·이슈에서 스킬을 지칭할 때 두 개의 이름이 돌아다니게 만들 뿐 아무것도 사지 못한다.
 
 **작명 형태** (D2 권고):
@@ -373,9 +395,20 @@ D5는 description 최적화를 별도 스크립트로 돌린다. 방법론만 �
 ### 6.1 분량 **[표준]**
 
 - **`SKILL.md` 본문 500줄 이하.** 실측 40개 전부 준수(최장 485줄, 중앙값 80줄).
+- **본문 5,000토큰 이하** — D6이 점진적 공개 3단계에 토큰 기준을 붙여 둔다:
+  메타데이터 ~100토큰 · **본문 < 5,000토큰(권고)** · 리소스는 필요할 때만.
+  500줄 기준과 함께 **둘 다** 본다. 표·코드블록이 많은 본문은 500줄 안에서도 5,000토큰을 넘는다.
 - 500줄에 근접하면 **계층을 하나 더 만들고**, 어디로 가야 하는지 포인터를 남긴다.
 - 참조 파일이 **100줄을 넘으면 맨 위에 목차**를 둔다. Claude가 `head -100`으로 미리보기 할 때
   전체 범위가 보이게 하기 위해서다.
+
+> **메타데이터 단계에도 예산이 있다 — `description`은 앞쪽부터 쓴다.**
+> 1단계(~100토큰)는 **설치된 스킬 전체의 합**이다. 스킬이 늘면 구현이 잘라낸다. Codex CLI는
+> 스킬 메타데이터에 컨텍스트 예산을 두고 초과분의 `description`을 **절단**한다 — 관측 지표가
+> `codex.thread.skills.{enabled_total,kept_total,truncated,description_truncated_chars}`이고
+> 로그가 *"truncated skill metadata to fit skills context budget"*이다(codex-cli 0.162.1 바이너리
+> 실측, 2026-11-04). §5.3의 상한 1,024자를 꽉 채우면 **트리거 문구가 잘려 나갈 수 있다.**
+> → **언제 쓰는지를 `description` 첫 100~200자에 넣는다.** 뒤쪽은 보강용으로만 쓴다.
 
 ### 6.2 간결성 — "Claude는 이미 똑똑하다" **[표준]**
 
@@ -901,20 +934,21 @@ D5: 스킬의 내용은 **설명대로일 때 사용자를 놀라게 하지 않�
 - [ ] `compatibility` 쓴다면 ≤500자
 - [ ] **P0 목표라면** 프론트매터가 `name`/`description`/`license`/`compatibility`/`metadata`/`allowed-tools` 6개 안에만 있음
 - [ ] 총 크기 30MB 미만
-- [ ] 디렉터리 이름 == `name`
+- [ ] **디렉터리 이름 == `name`** (D6 규칙. Claude Code는 조용히 흡수하지만 다른 구현은 로드 실패)
+- [ ] `metadata` 쓴다면 **값이 전부 문자열** (`version: "1.0"`)
 
 ### description
 
 - [ ] 3인칭
 - [ ] 무엇을 하는가 + **언제 쓰는가**를 모두 포함
-- [ ] 핵심 유스케이스가 **앞에** (1,536자에서 잘림)
+- [ ] 핵심 유스케이스가 **앞에** (1,536자에서 잘림, 구현의 메타데이터 예산에서도 뒤가 먼저 잘림)
 - [ ] 구체적 트리거 용어(확장자·도구명·사용자가 쓸 표현) 포함
 - [ ] 인접 스킬과의 **배제 조건** 포함
 - [ ] 언더트리거를 감안해 약간 밀어붙임
 
 ### 본문
 
-- [ ] 500줄 이하
+- [ ] 500줄 이하 **그리고** 5,000토큰 이하 (D6)
 - [ ] Claude가 이미 아는 내용을 설명하지 않음
 - [ ] 자유도가 작업의 취약성에 맞음
 - [ ] 대문자 MUST/ALWAYS 남발 대신 **이유**를 설명
@@ -959,6 +993,7 @@ D5: 스킬의 내용은 **설명대로일 때 사용자를 놀라게 하지 않�
 | 파일 | 내용 |
 |---|---|
 | [`validate_skill.py`](validate_skill.py) | §4.1 규격을 그대로 구현한 검증기. 이 문서의 실행 가능한 부분 |
+| 외부 — `skills-ref` | 개방 표준의 **공식 참조 검증기**: `skills-ref validate ./my-skill` ([agentskills/agentskills](https://github.com/agentskills/agentskills/tree/main/skills-ref)). `validate_skill.py --portable`과 **교차 검증**해 두 결과가 갈리는 지점을 이 문서의 결함으로 취급한다 |
 | [`templates/SKILL.md`](templates/SKILL.md) | P0(이식형) 뼈대 |
 | [`templates/SKILL.claude-code.md`](templates/SKILL.claude-code.md) | P1(Claude Code 확장) 뼈대 |
 | [`Agent_Skills_구조도.drawio`](Agent_Skills_구조도.drawio) | 3단계 로딩·수명주기·배포 경로 |
