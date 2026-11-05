@@ -15,6 +15,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
@@ -25,10 +26,9 @@ DATA = HERE / "data"
 SKILL = HERE / "skill" / "sensor-defect-screening"
 RUNS = HERE / "runs"
 VENV_BIN = HERE / ".venv" / "bin"
+# 기본값은 OS 임시 디렉터리 아래. 저장소 안이면 안 된다(위 docstring 참고).
 WORK_ROOT = Path(os.environ.get(
-    "SECOM_WORK_ROOT",
-    "/private/tmp/claude-501/-Users-jisu-data-workspace-vibe-analysis-docs/"
-    "1732be2a-c19b-469c-9436-a23ff837a1a2/scratchpad/secom-runs"))
+    "SECOM_WORK_ROOT", Path(tempfile.gettempdir()) / "secom-runs"))
 
 MODEL = "gpt-5.6-terra"
 EFFORT = "high"
