@@ -11,6 +11,7 @@ mcp/                     MCP(Model Context Protocol) — 개념·구조·다이�
 freebuff/                Freebuff — 무료 AI 코딩 에이전트의 경제 구조 분석
 agent-skills/            Agent Skills — 작성 표준·검증기·템플릿
 agentic-analysis/        에이전틱 데이터 분석·RCA — 기법별 적용 지형, 연구 조사, SECOM 실행 검증
+memory/                  Python 웹서버 메모리 관리 — 기본 · MCP 서버(2.0+) · Google ADK(1.x/2.x)
 ```
 
 ---
@@ -255,3 +256,32 @@ Anthropic **Agent Skills**의 작성 표준. 공식 문서 4종과 Anthropic이 
   어렵다** — LLM의 약점과 정확히 겹친다. 계산을 `scripts/`로 내리고 전제 체크를 결정적으로
   강제하는 구성이 SPC·Cpk·MSA·공통성분석 전반에 공통 적용된다.
 
+---
+
+# Python 웹서버 메모리 관리
+
+📁 [`memory/`](memory/)
+
+공유 대화(웹 검색 기반 Q&A 2건) + 이 저장소의 실측 문서 + **2026-10-01 설치 패키지 소스 대조**
+(mcp 1.27.0 / 2.0.0 / 2.2.0, google-adk 1.26.0 / 1.39.1 / 2.10.0, uvicorn 0.54.0)로 정리한 가이드.
+
+| 문서 | 내용 |
+|---|---|
+| [메모리 관리 가이드](memory/Python_웹서버_메모리관리_가이드.md) | ① 파이썬 웹서버 기본(누수 vs 보유 판별, `malloc_trim` 평가, allocator·워커 재활용, K8s) ② MCP 서버 2.0+ 특화 ③ ADK 1.x / 2.x 버전별 대조표와 요령, 기존 서술 보정 |
+
+### 핵심 요약
+
+- **RSS가 안 내려가는 것은 누수의 증거가 아니다.** 객체 수·파이썬 힙으로 판별하고, allocator 보유면
+  `MALLOC_ARENA_MAX=2` → jemalloc → 워커 재활용 순. `del+gc.collect+malloc_trim`은 대용량 작업 직후의
+  보조 수단일 뿐이다. 흔한 진짜 원인은 **클라이언트가 떠났는데 계속 도는 실행**이다.
+- **MCP SDK 2.x에도 상태 유지 세션이 남아 있다.** 2026-07-28 프로토콜은 스테이트리스지만 2025년형
+  클라이언트는 `stateless_http=False`(기본)에서 **서버 메모리에 세션**이 생긴다. 유휴 만료는 1.27.0·2.0.0
+  기본 **무기한**이고 **2.2.0부터 30분 · 최대 10,000개** 기본 상한이 생겼다. 가능하면 `stateless_http=True`.
+- **ADK 1.x 라인은 메모리 관련 수정을 거의 받지 못했다.** 끊김 시 실행 중단, MCP 세션 풀 유휴 만료(900초),
+  AgentTool 부모 설정 상속, 스킬 재시도 차단은 **2.x에만** 있다. 1.x에 들어간 건 히스토리 로드 상한
+  (`RunConfig.get_session_config`, 1.27.0+)과 기본 꺼진 가벼운 복사(1.29.0+)뿐이다.
+- **1.x AgentTool은 부모의 `run_config`를 자식에 넘기지 않는다** — 부모에 `max_llm_calls`를 낮춰도 자식은
+  500으로 돈다. 저장소 OOM 문서의 "부모 안전판"은 부모만 막는다.
+- **ADK의 MCP 세션 풀은 헤더 해시가 키다.** 사용자별 토큰을 헤더에 넣으면 사용자 수만큼 세션이 쌓이고
+  1.x에는 만료가 없다.
+- 2.x에서도 **InMemory 세션 무한 누적·요청당 deepcopy·`max_llm_calls` 호출별 리셋**은 그대로다.
