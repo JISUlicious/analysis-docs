@@ -77,8 +77,13 @@ COMPATIBILITY_MAX = 500
 #: description + when_to_use를 합쳐 스킬 목록에 실릴 때 잘리는 지점.
 LISTING_TRUNCATE_AT = 1536
 
-#: name에 들어갈 수 없는 예약어.
+#: name에 들어갈 수 없는 예약어. 부분 문자열로 검사한다.
 RESERVED_WORDS = ("anthropic", "claude")
+
+#: Claude Code가 예약한 이름. 정확히 일치할 때만 금지다 — "synced"는 claude.ai 동기화
+#: 스킬이 들어가는 자리이고, 부분 문자열로 막으면 data-synced-export 같은 멀쩡한 이름이
+#: 걸린다. "anthropic-skills"는 RESERVED_WORDS에서 이미 걸린다.
+RESERVED_NAMES = ("synced",)
 
 #: 업로드 상한(압축 해제 기준).
 MAX_TOTAL_BYTES = 30 * 1024 * 1024
@@ -213,6 +218,10 @@ def check_frontmatter(fm: dict, rep: Report, portable: bool) -> None:
             for word in RESERVED_WORDS:
                 if word in name.lower():
                     rep.error(f"name '{name}': 예약어 '{word}' 포함")
+            if name.lower() in RESERVED_NAMES:
+                rep.error(
+                    f"name '{name}': Claude Code 예약 이름 — 그 이름으로는 로드되지 않는다"
+                )
             if XML_TAG.search(name):
                 rep.error(f"name '{name}': XML 태그 포함")
             if name != rep.skill_dir.name:
