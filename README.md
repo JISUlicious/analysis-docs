@@ -6,7 +6,9 @@
 google-adk/
 ├── planreact-planner/   PlanReActPlanner — 프롬프트가 단계별로 어떻게 변하는가
 ├── agent-tool/          AgentTool — 에이전트를 도구로 감쌌을 때의 동작
-└── web-server/          AdkWebServer — 세션 라이프사이클·메모리, 잔존 실행 관측
+├── web-server/          AdkWebServer — 세션 라이프사이클·메모리, 잔존 실행 관측
+├── classifiers/         결정 모델 분류기 — Decisions · SystemOne API 도입 현황
+└── releases/            릴리스·개발 운영 현황 — 주기, 깨지는 변경, 기여 구조
 mcp/                     MCP(Model Context Protocol) — 개념·구조·다이어그램
 freebuff/                Freebuff — 무료 AI 코딩 에이전트의 경제 구조 분석
 agent-skills/            Agent Skills — 작성 표준·검증기·템플릿
@@ -18,7 +20,7 @@ memory/                  Python 웹서버 메모리 관리 — 기본 · MCP 서
 
 # Google ADK (Python)
 
-분석 기준 버전: **v1.26.0** (`google/adk-python`, 태그 `427a983b`)
+분석 기준 버전: 1~3절 **v1.26.0** (`google/adk-python`, 태그 `427a983b`) · 4~5절 **v2.14.0** (`main` @ `1cb926d`, 2026-11-09 조사)
 
 ## 1. PlanReActPlanner — 단계별 프롬프트 변화
 
@@ -87,6 +89,38 @@ memory/                  Python 웹서버 메모리 관리 — 기본 · MCP 서
 - "잔존 인스턴스"는 **잔존 실행(버려진 `/run_sse` 등)의 그림자** — 실행 중 invocation당 `Session 1 + InvocationContext 2`, 종료 시 수 턴 내 회수.
 - 실제 성장 벡터: **(A)** InMemory 마스터 무한 성장(evict 없음) **(B)** SSE 끊김 미처리(1.26.0, upstream `6a533573`이 후속 수정) **(C)** 요청당 전체 히스토리 로드.
 - 관측 체계: after_run이 finally가 아닌 성질을 이용한 RunTracker 판정 + 코루틴 객체 열거 기반 정지 지점 덤프(`Task.get_stack()`·FrameType 열거는 함정) + 주기 census로 점진 증가 귀속.
+
+## 4. 결정 모델 분류기 — Decisions API · SystemOne API
+
+📁 [`google-adk/classifiers/`](google-adk/classifiers/)
+
+| 문서 | 내용 |
+|---|---|
+| [결정 모델 분류기 도입 현황](google-adk/classifiers/결정모델_분류기_도입현황.md) | `labs.classifiers` 공통층(질문·답 타입, `ClassifierNode`), TypeSafe `/v1/systemone`·OpenAI `/v1/decisions` 어댑터 비교, 커밋→릴리스 타임라인, 도입 깊이 4가지 사실, 언어별 격차, 적용 권고 |
+
+### 핵심 요약
+
+- **두 API는 ADK 것이 아니다.** `/v1/systemone`은 TypeSafe(Jev), `/v1/decisions`는 OpenAI(`gpt-6-luna` 전용)의 결정 모델 엔드포인트이고, ADK는 이를 `BaseClassifier` 어댑터로 감쌌다.
+- 공통층이 먼저(2026-10-14), 어댑터가 뒤 — **TypeSafe는 v2.13.0**(의존성 없음, `httpx`+`tenacity`), **OpenAI Decisions는 v2.14.0**(`google-adk[openai]` 필요).
+- 질문은 `Choice`/`Binary`/`Score`, 답은 라벨별 확률 + 질문 단위 `RefusalAnswer`. `ClassifierNode`가 그 답을 워크플로 경로로 쓴다.
+- **도입 깊이는 아직 얕다**: `FeatureStage.EXPERIMENTAL`, `src/` 안 사용처 0(샘플 2개뿐), `adk-docs`에 개념 문서 없음, 예고된 `DecisionGemma`는 코드에 없음.
+- 커뮤니티의 벤더 전용 PR(`#7235`)을 닫고 provider-agnostic 설계로 다시 만든 것이 이 영역의 설계 근거 기록이다. 이미지 입력 요청(`#7742`)은 코드 반영 없이 닫혀 **텍스트/JSON만** 가능.
+- 권고: `LlmClassifier`로 **인터페이스만 먼저 채택**하면 나중에 어댑터를 바꿔도 그래프 코드는 그대로다.
+
+## 5. 릴리스·개발 운영 현황
+
+📁 [`google-adk/releases/`](google-adk/releases/)
+
+| 문서 | 내용 |
+|---|---|
+| [v2.14.0 릴리스·개발 운영 현황](google-adk/releases/v2.14.0_릴리스_개발운영_현황.md) | 릴리스 주기와 1.x 동결, v2.14.0 stable 승격 물결, 깨지는 변경·조용한 동작 변경 목록, 이슈/PR 수치를 읽는 법(copybara 내부 개발), 열린 RFC, 언어별 트랙 |
+
+### 핵심 요약
+
+- **약 2주 주기 마이너 릴리스**. 최신 v2.14.0(2026-11-07), **1.x는 v1.39.1(2026-08-27)에서 동결** — 신규 기능은 2.x 전용(`v1` 브랜치에 `labs`가 없음).
+- v2.14.0의 주제는 **대규모 stable 승격**(실행환경·A2A·평가·코어 26개 모듈 + 툴셋/통합 16개). ⚠️ 승격된 16개는 `ADK_DISABLE_*`·`--disable_features`가 **경고 없이 무시**된다.
+- 업그레이드 시 걸리는 것: **`Enum` 툴 인자가 멤버로 전달**(문자열 비교 깨짐), `RunSkillScriptTool`의 자유형 `command` 제거(프롬프트 인젝션 차단), PostgreSQL `jsonb`→`json`, Firestore 세션의 롤백 비호환.
+- **이슈 422·PR 225는 적체가 아니다** — `copybara/*`로 내부 개발이 `main`에 직접 들어오고(하루 10~20커밋), 머지되는 PR은 주당 1~3건이다. 기능 제안은 PR보다 이슈로 설계 합의가 먼저.
 
 ---
 
