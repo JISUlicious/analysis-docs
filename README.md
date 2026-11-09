@@ -10,7 +10,7 @@ google-adk/
 ├── classifiers/         결정 모델 분류기 — Decisions · SystemOne API 도입 현황
 ├── releases/            릴리스·개발 운영 현황 — 주기, 깨지는 변경, 기여 구조
 ├── migration/           저장소 문서의 2.x 격차 점검 — 1.26.0 문서 ↔ v2.14.0
-└── architecture/        설계 개념 — 1.x↔2.x, 에이전트에서 노드로
+└── architecture/        설계 개념 — 1.x↔2.x, 그래프와 에이전트 루프의 자리
 mcp/                     MCP(Model Context Protocol) — 개념·구조·다이어그램
 freebuff/                Freebuff — 무료 AI 코딩 에이전트의 경제 구조 분석
 agent-skills/            Agent Skills — 작성 표준·검증기·템플릿
@@ -142,13 +142,14 @@ memory/                  Python 웹서버 메모리 관리 — 기본 · MCP 서
 - **이벤트·압축·중단 봉인**(6절 추가 확인): `events/`가 3→14파일, `Event`에 `node_info`·`output`·`isolation_scope` 추가, 중단된 invocation을 **봉인 이벤트로 이력에 남김**, 압축이 Runner 소유로 옮겨지며 HITL 확인 요청을 보호, `StaleSessionError(ValueError)` 신설 → 잔존 실행 관측 명세의 전제와 직접 충돌.
 - 1~3절 각 문서 머리에 경고 한 줄을 달아 두었다. **전면 재작성은 하지 않는다** — 1.26.0 실측은 그 버전의 1차 자료이므로, 버전 꼬리표를 달고 2.x 차이를 덧붙이는 쪽이 근거를 잃지 않는다.
 
-## 7. 설계 개념 — 1.x와 2.x는 무엇이 다른가
+## 7. 설계 개념 — 1.x와 2.x의 차이, 그래프와 에이전트 루프의 자리
 
 📁 [`google-adk/architecture/`](google-adk/architecture/)
 
 | 문서 | 내용 |
 |---|---|
 | [ADK 1.x와 2.x의 설계 비교](google-adk/architecture/ADK_1x_2x_설계비교.md) | 클래스 계층·패키지 구성으로 본 구조 변화, 제어 흐름·합성·이벤트·시간 축·컨텍스트 경계 6개 축 비교, 그래프로 간 이유(공식 근거와 해석 분리), 대가 |
+| [ADK 2.x의 그래프와 에이전트 루프](google-adk/architecture/ADK_2x_그래프와_에이전트루프.md) | Claude Code·Codex·pi·Hermes와 런타임 비교, 그래프와 루프를 각각 언제 쓰나, explore→plan→code→verify 절차와 게이트 위치, 에이전트 생성의 세 층(수명 결속·이력 일관성·멱등 재개) |
 
 ### 핵심 요약
 
@@ -157,6 +158,10 @@ memory/                  Python 웹서버 메모리 관리 — 기본 · MCP 서
 - **더 깊은 변화는 세션 로그의 의미**: 대화 기록 → 실행 저널(`node_info.path`, 체크포인트, 인터럽트, 중단 봉인). "완료된 노드는 다시 실행하지 않는다"가 여기서 나온다.
 - **왜 그래프인가**: 재개에는 "어디까지 했는가"의 좌표가 필요하고, ADK는 노드 경로를 그 좌표로 택했다. 다만 정적 그래프가 durable execution의 필요조건은 아니다 — pi-durable과 Claude Code 워크플로는 그래프 없이 같은 성질을 얻는다.
 - **대가**: replay·resume 회귀(`#6497`, `#7027`), 무거워진 이벤트 모델, 늘어난 개념 수.
+- **그래프는 하네스의 코어가 아니라 유즈케이스 층**: 조사한 네 하네스 모두 코어는 모델 주도 루프이고, 다단계 조합은 선언형 그래프가 아니라 **모델이 쓰는 코드**(Codex Code Mode, pi codemode, Hermes `execute_code`, Claude Code dynamic workflow)로 수렴했다. `Workflow`가 맞는 곳은 무인·모양 고정·며칠짜리 승인 대기·사전 검증이 필요한 실행이다.
+- **절차 강제에 필요한 것은 거친 상태 기계**: explore→plan→code→verify는 되돌아가는 상태 기계다. "단계 = 정책 묶음, 전이 = 하네스가 판정하는 가드", 게이트 판정은 외부(테스트·별도 검증자)여야 한다. 대화형 하드 게이트는 스텝 경계 콜백에 둔다.
+- **루트를 `Workflow`로 바꾸면 위임 의미론이 바뀐다**: 노드 안의 `transfer_to_agent`는 그 노드를 끝내고, 대상은 스케줄러가 다음 노드 실행으로 이어 돌린다.
+- **생성은 선언이 아니라 기록**: 필요한 원시는 "저널 + 스텝 경계 훅". `ctx.run_node()`는 직접 `await`할 때만 부모와 수명이 묶이므로, "지금 띄우고 나중에 수거"하는 모양에서는 완료 결과를 안정적인 키로 저널에 남기는 일을 하네스가 맡아야 한다.
 
 ---
 
