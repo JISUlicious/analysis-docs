@@ -9,7 +9,8 @@ google-adk/
 ├── web-server/          AdkWebServer — 세션 라이프사이클·메모리, 잔존 실행 관측
 ├── classifiers/         결정 모델 분류기 — Decisions · SystemOne API 도입 현황
 ├── releases/            릴리스·개발 운영 현황 — 주기, 깨지는 변경, 기여 구조
-└── migration/           저장소 문서의 2.x 격차 점검 — 1.26.0 문서 ↔ v2.14.0
+├── migration/           저장소 문서의 2.x 격차 점검 — 1.26.0 문서 ↔ v2.14.0
+└── architecture/        설계 개념 — 1.x↔2.x, 에이전트에서 노드로
 mcp/                     MCP(Model Context Protocol) — 개념·구조·다이어그램
 freebuff/                Freebuff — 무료 AI 코딩 에이전트의 경제 구조 분석
 agent-skills/            Agent Skills — 작성 표준·검증기·템플릿
@@ -21,7 +22,7 @@ memory/                  Python 웹서버 메모리 관리 — 기본 · MCP 서
 
 # Google ADK (Python)
 
-분석 기준 버전: 1~3절 **v1.26.0** (`google/adk-python`, 태그 `427a983b`) · 4~6절 **v2.14.0** (`main` @ `1cb926d`, 2026-11-09 조사)
+분석 기준 버전: 1~3절 **v1.26.0** (`google/adk-python`, 태그 `427a983b`) · 4~7절 **v2.14.0** (`main` @ `1cb926d`, 2026-11-09 조사)
 
 > 1~3절은 1.26.0 기준이고 **1.x 라인은 v1.39.1(2026-08-27)에서 동결**됐다. 2.x에서 무엇이 달라졌는지는 6절에 판정별로 정리해 두었다.
 
@@ -140,6 +141,22 @@ memory/                  Python 웹서버 메모리 관리 — 기본 · MCP 서
 - **그대로**: 태그 5종과 thought 2단 구조, 기본 `AgentTool`의 격리 실행·state 양방향, 세션 스냅샷 deepcopy, `InMemorySessionService`에 evict 없음(성장 벡터 A).
 - **이벤트·압축·중단 봉인**(6절 추가 확인): `events/`가 3→14파일, `Event`에 `node_info`·`output`·`isolation_scope` 추가, 중단된 invocation을 **봉인 이벤트로 이력에 남김**, 압축이 Runner 소유로 옮겨지며 HITL 확인 요청을 보호, `StaleSessionError(ValueError)` 신설 → 잔존 실행 관측 명세의 전제와 직접 충돌.
 - 1~3절 각 문서 머리에 경고 한 줄을 달아 두었다. **전면 재작성은 하지 않는다** — 1.26.0 실측은 그 버전의 1차 자료이므로, 버전 꼬리표를 달고 2.x 차이를 덧붙이는 쪽이 근거를 잃지 않는다.
+
+## 7. 설계 개념 — 1.x와 2.x는 무엇이 다른가
+
+📁 [`google-adk/architecture/`](google-adk/architecture/)
+
+| 문서 | 내용 |
+|---|---|
+| [ADK 1.x와 2.x의 설계 비교](google-adk/architecture/ADK_1x_2x_설계비교.md) | 클래스 계층·패키지 구성으로 본 구조 변화, 제어 흐름·합성·이벤트·시간 축·컨텍스트 경계 6개 축 비교, 그래프로 간 이유(공식 근거와 해석 분리), 대가 |
+
+### 핵심 요약
+
+- **실행 단위가 에이전트에서 노드로**: 2.x에서 `class BaseAgent(BaseNode, abc.ABC)` — 1.26.0은 `BaseModel` 직속, `workflow/` 패키지 자체가 없었다. `LlmAgent`는 사라지지 않고 함수·툴·`Workflow`와 같은 자격의 노드가 됐다.
+- **LLM 루프는 그대로**: `flows/llm_flows`가 여전히 `LlmAgent`를 구동한다. 2.x는 루프 위에 오케스트레이션 층을 얹은 진화형 변경이다.
+- **더 깊은 변화는 세션 로그의 의미**: 대화 기록 → 실행 저널(`node_info.path`, 체크포인트, 인터럽트, 중단 봉인). "완료된 노드는 다시 실행하지 않는다"가 여기서 나온다.
+- **왜 그래프인가**: 재개에는 "어디까지 했는가"의 좌표가 필요하고, ADK는 노드 경로를 그 좌표로 택했다. 다만 정적 그래프가 durable execution의 필요조건은 아니다 — pi-durable과 Claude Code 워크플로는 그래프 없이 같은 성질을 얻는다.
+- **대가**: replay·resume 회귀(`#6497`, `#7027`), 무거워진 이벤트 모델, 늘어난 개념 수.
 
 ---
 
