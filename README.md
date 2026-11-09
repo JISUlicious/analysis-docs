@@ -138,6 +138,7 @@ memory/                  Python 웹서버 메모리 관리 — 기본 · MCP 서
 - **틀림 3건**: ① `AdkWebServer`가 2.x에서 **deprecated**(→ `ApiServer`/`DevServer`) ② PlanReActPlanner가 **계획 태그를 텍스트에서 제거**(`_strip_planning_tags`) — "프레임워크는 태그를 편집하지 않는다"가 깨짐 ③ OOM 문서의 수정 버전 매트릭스 2행(#6225, `e737f229`)이 이제 릴리스에 반영됨.
 - **주의 12건**: 첫 함수호출 그룹 수집 버그 수정(`> 0` → `>= 0`), 동적 지침 라우팅(기본 꺼짐), 프로세서 순서 한 칸 이동, `AgentTool`의 `mode` 변종(격리 Runner 아님), 플러그인 콜백 12→14개, SSE 끊김 처리와 `RunConfig.get_session_config` 추가(성장 벡터 B·C 완화), **`flows/llm_flows` 경로 전면 이동**(shim 유지).
 - **그대로**: 태그 5종과 thought 2단 구조, 기본 `AgentTool`의 격리 실행·state 양방향, 세션 스냅샷 deepcopy, `InMemorySessionService`에 evict 없음(성장 벡터 A).
+- **이벤트·압축·중단 봉인**(6절 추가 확인): `events/`가 3→14파일, `Event`에 `node_info`·`output`·`isolation_scope` 추가, 중단된 invocation을 **봉인 이벤트로 이력에 남김**, 압축이 Runner 소유로 옮겨지며 HITL 확인 요청을 보호, `StaleSessionError(ValueError)` 신설 → 잔존 실행 관측 명세의 전제와 직접 충돌.
 - 1~3절 각 문서 머리에 경고 한 줄을 달아 두었다. **전면 재작성은 하지 않는다** — 1.26.0 실측은 그 버전의 1차 자료이므로, 버전 꼬리표를 달고 2.x 차이를 덧붙이는 쪽이 근거를 잃지 않는다.
 
 ---
