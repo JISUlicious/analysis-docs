@@ -1,5 +1,6 @@
 # AdkWebServer 세션 라이프사이클 · 메모리 분석 (ADK Python v1.26.0)
 
+> ⚠️ **1.26.0 기준 문서.** `AdkWebServer`는 v2.x에서 **deprecated**(→ `ApiServer`/`DevServer`)이고, 성장 벡터 (B) SSE 끊김과 (C) 전체 히스토리 로드에는 2.x 완화책이 있다 → [문서 격차 점검](../migration/문서격차점검_v1.26.0_v2.14.0.md)
 > **발단 관측**: `_get_or_create_session`이 동일 세션의 새 요청마다 세션 객체를 새로 만들고
 > 기존 것을 재사용하지 않으며, 응답 후에도 세션이 남아 있는 것처럼 보임 → 누수 여부 조사.
 > **방법**: v1.26.0 소스 분석 + weakref/gc 실측 (mock LLM, DatabaseSessionService=sqlite 포함).

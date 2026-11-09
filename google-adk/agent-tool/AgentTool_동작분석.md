@@ -1,5 +1,6 @@
 # AgentTool이 LlmAgent를 감쌌을 때의 동작 — 일반 agent 흐름과의 차이점
 
+> ⚠️ **1.26.0 기준 문서.** v2.14.0에는 `mode='chat'` 전용 변종(`_SingleTurnAgentTool`·`_TaskAgentTool`)이 있어 **격리 Runner를 쓰지 않는 경로**가 존재한다 → [문서 격차 점검](../migration/문서격차점검_v1.26.0_v2.14.0.md)
 > 대상: ADK Python **v1.26.0**
 > 코드: `src/google/adk/tools/agent_tool.py`, `src/google/adk/tools/_forwarding_artifact_service.py`
 > 전제: 일반 `LlmAgent`의 실행 흐름(runner→flow→LLM→tool loop)은 이미 이해한 상태. 여기서는 **AgentTool로 감쌌을 때 달라지는 지점**만 집중.

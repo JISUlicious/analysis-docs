@@ -8,7 +8,8 @@ google-adk/
 ├── agent-tool/          AgentTool — 에이전트를 도구로 감쌌을 때의 동작
 ├── web-server/          AdkWebServer — 세션 라이프사이클·메모리, 잔존 실행 관측
 ├── classifiers/         결정 모델 분류기 — Decisions · SystemOne API 도입 현황
-└── releases/            릴리스·개발 운영 현황 — 주기, 깨지는 변경, 기여 구조
+├── releases/            릴리스·개발 운영 현황 — 주기, 깨지는 변경, 기여 구조
+└── migration/           저장소 문서의 2.x 격차 점검 — 1.26.0 문서 ↔ v2.14.0
 mcp/                     MCP(Model Context Protocol) — 개념·구조·다이어그램
 freebuff/                Freebuff — 무료 AI 코딩 에이전트의 경제 구조 분석
 agent-skills/            Agent Skills — 작성 표준·검증기·템플릿
@@ -20,7 +21,9 @@ memory/                  Python 웹서버 메모리 관리 — 기본 · MCP 서
 
 # Google ADK (Python)
 
-분석 기준 버전: 1~3절 **v1.26.0** (`google/adk-python`, 태그 `427a983b`) · 4~5절 **v2.14.0** (`main` @ `1cb926d`, 2026-11-09 조사)
+분석 기준 버전: 1~3절 **v1.26.0** (`google/adk-python`, 태그 `427a983b`) · 4~6절 **v2.14.0** (`main` @ `1cb926d`, 2026-11-09 조사)
+
+> 1~3절은 1.26.0 기준이고 **1.x 라인은 v1.39.1(2026-08-27)에서 동결**됐다. 2.x에서 무엇이 달라졌는지는 6절에 판정별로 정리해 두었다.
 
 ## 1. PlanReActPlanner — 단계별 프롬프트 변화
 
@@ -121,6 +124,21 @@ memory/                  Python 웹서버 메모리 관리 — 기본 · MCP 서
 - v2.14.0의 주제는 **대규모 stable 승격**(실행환경·A2A·평가·코어 26개 모듈 + 툴셋/통합 16개). ⚠️ 승격된 16개는 `ADK_DISABLE_*`·`--disable_features`가 **경고 없이 무시**된다.
 - 업그레이드 시 걸리는 것: **`Enum` 툴 인자가 멤버로 전달**(문자열 비교 깨짐), `RunSkillScriptTool`의 자유형 `command` 제거(프롬프트 인젝션 차단), PostgreSQL `jsonb`→`json`, Firestore 세션의 롤백 비호환.
 - **이슈 422·PR 225는 적체가 아니다** — `copybara/*`로 내부 개발이 `main`에 직접 들어오고(하루 10~20커밋), 머지되는 PR은 주당 1~3건이다. 기능 제안은 PR보다 이슈로 설계 합의가 먼저.
+
+## 6. 저장소 문서의 2.x 격차 점검
+
+📁 [`google-adk/migration/`](google-adk/migration/)
+
+| 문서 | 내용 |
+|---|---|
+| [문서 격차 점검 (v1.26.0 → v2.14.0)](google-adk/migration/문서격차점검_v1.26.0_v2.14.0.md) | 1~3절 문서가 인용한 소스 15개를 양쪽 버전에서 diff해 **그대로 / 주의 / 틀림** 3단으로 판정하고, 재작성 범위를 P0~P4로 제안 |
+
+### 핵심 요약
+
+- **틀림 3건**: ① `AdkWebServer`가 2.x에서 **deprecated**(→ `ApiServer`/`DevServer`) ② PlanReActPlanner가 **계획 태그를 텍스트에서 제거**(`_strip_planning_tags`) — "프레임워크는 태그를 편집하지 않는다"가 깨짐 ③ OOM 문서의 수정 버전 매트릭스 2행(#6225, `e737f229`)이 이제 릴리스에 반영됨.
+- **주의 12건**: 첫 함수호출 그룹 수집 버그 수정(`> 0` → `>= 0`), 동적 지침 라우팅(기본 꺼짐), 프로세서 순서 한 칸 이동, `AgentTool`의 `mode` 변종(격리 Runner 아님), 플러그인 콜백 12→14개, SSE 끊김 처리와 `RunConfig.get_session_config` 추가(성장 벡터 B·C 완화), **`flows/llm_flows` 경로 전면 이동**(shim 유지).
+- **그대로**: 태그 5종과 thought 2단 구조, 기본 `AgentTool`의 격리 실행·state 양방향, 세션 스냅샷 deepcopy, `InMemorySessionService`에 evict 없음(성장 벡터 A).
+- 1~3절 각 문서 머리에 경고 한 줄을 달아 두었다. **전면 재작성은 하지 않는다** — 1.26.0 실측은 그 버전의 1차 자료이므로, 버전 꼬리표를 달고 2.x 차이를 덧붙이는 쪽이 근거를 잃지 않는다.
 
 ---
 

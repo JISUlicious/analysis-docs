@@ -1,5 +1,6 @@
 # PlanReActPlanner 동작 분석 보고서 (ADK Python v1.26.0)
 
+> ⚠️ **1.26.0 기준 문서.** v2.14.0은 `_strip_planning_tags`로 **계획 태그를 텍스트에서 제거**하므로, "프레임워크는 태그 블록 내용을 편집하지 않는다"는 서술은 1.26.0 한정이다 → [문서 격차 점검](../migration/문서격차점검_v1.26.0_v2.14.0.md)
 > 분석 대상: `google/adk-python` **v1.26.0** 태그(`427a983b`)
 > 검증: 실제 소스 + 단위테스트 `tests/unittests/flows/llm_flows/test_nl_planning.py`
 

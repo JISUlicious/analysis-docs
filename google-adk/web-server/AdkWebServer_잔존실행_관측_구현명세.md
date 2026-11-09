@@ -1,5 +1,6 @@
 # 구현 명세: ADK 웹서버 잔존 실행(run) 및 세션 객체 관측 체계
 
+> ⚠️ **1.26.0 기준 명세.** `AdkWebServer`는 v2.x에서 **deprecated**(→ `ApiServer`/`DevServer`)이고, 플러그인 콜백이 14개로 늘어(`on_run_error_callback` 등) 판정을 단순화할 수 있다 → [문서 격차 점검](../migration/문서격차점검_v1.26.0_v2.14.0.md)
 > **대상**: google-adk **1.26.0** 기반 FastAPI 서버 (AdkWebServer 또는 자체 조립 서버)
 > **목적**: ① 응답 종료 후에도 살아 있는 invocation(버려진 `/run_sse` 실행 등)을 탐지하고,
 > ② 세션 관련 객체의 잔존 여부를 RSS가 아닌 **객체 수 기준**으로 진단할 수 있는 관측 체계를 구현한다.
